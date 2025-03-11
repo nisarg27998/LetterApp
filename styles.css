@@ -113,13 +113,49 @@ textarea {
     border-bottom: none;
 }
 
+#document-list {
+    list-style: none;
+    padding: 0;
+}
+
+#document-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+#document-list li:last-child {
+    border-bottom: none;
+}
+
 #document-list button {
-    margin-left: 10px;
-    background-color: #e74c3c;
+    margin-left: 15px; /* Increased from 10px */
+    padding: 8px 16px; /* Consistent padding */
+    background-color: #e74c3c; /* Delete button color */
+}
+
+/* Specific button styles */
+#document-list button:nth-child(1) { /* Download */
+    margin-left: 0; /* No left margin on first button */
+    background-color: #3498db;
+}
+
+#document-list button:nth-child(2) { /* Edit */
+    background-color: #f1c40f;
 }
 
 #document-list button:hover {
-    background-color: #c0392b;
+    background-color: #c0392b; /* Delete hover */
+}
+
+#document-list button:nth-child(1):hover { /* Download hover */
+    background-color: #2980b9;
+}
+
+#document-list button:nth-child(2):hover { /* Edit hover */
+    background-color: #d4ac0d;
 }
 
 /* Responsive Design */
@@ -156,4 +192,9 @@ textarea {
     border: 1px solid #ddd;
     border-radius: 5px;
     font-size: 16px;
+}
+
+#document-list button {
+    margin-left: 10px;
+    background-color: #e74c3c;
 }
