@@ -2,16 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// Your Firebase config
-const firebaseConfig = {
-    apiKey: "AIzaSyCroQ0YiVCM1N0Rc3r0UF8Fi7sKE936rag",
-    authDomain: "letterapp-6ce0e.firebaseapp.com",
-    projectId: "letterapp-6ce0e",
-    storageBucket: "letterapp-6ce0e.firebasestorage.app",
-    messagingSenderId: "881956313058",
-    appId: "1:881956313058:web:0db1d59066616119640bbb"
-};
+import { firebaseConfig } from './config.js';
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
