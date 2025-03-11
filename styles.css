@@ -47,7 +47,8 @@ form {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-width: 600px;
+    max-width: 400px; /* Reduced width for login form */
+    margin: 0 auto; /* Center the form */
 }
 
 input, textarea {
@@ -62,6 +63,37 @@ input, textarea {
 textarea {
     min-height: 150px;
     resize: vertical;
+}
+
+#login-section {
+    max-width: 500px;
+    margin: 40px auto; /* Center login section */
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+#login-section h2 {
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 20px;
+}
+
+#login-form button {
+    background-color: #2ecc71;
+    padding: 12px;
+    font-size: 16px;
+}
+
+#login-form button:hover {
+    background-color: #27ae60;
+}
+
+#login-error {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 14px;
 }
 
 #document-list {
@@ -105,5 +137,10 @@ textarea {
         flex-direction: column;
         text-align: center;
         gap: 10px;
+    }
+
+    #login-section {
+        margin: 20px 10px;
+        padding: 20px;
     }
 }
