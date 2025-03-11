@@ -1,7 +1,7 @@
 // Firebase Imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from './config.js';
 
 // Initialize Firebase
@@ -16,7 +16,7 @@ const adminSection = document.getElementById('admin-section');
 const letterForm = document.getElementById('letter-form');
 const documentList = document.getElementById('document-list');
 
-// Admin Email (hardcoded for simplicity)
+// Admin Email
 const ADMIN_EMAIL = "admin@example.com";
 
 // Authentication State Listener
@@ -26,13 +26,15 @@ onAuthStateChanged(auth, user => {
         logoutBtn.style.display = 'block';
         if (user.email === ADMIN_EMAIL) {
             adminSection.style.display = 'block';
+            loadDocuments(true); // Show delete buttons for admin
+        } else {
+            loadDocuments(false); // No delete buttons for guests
         }
-        loadDocuments();
     } else {
         loginBtn.style.display = 'block';
         logoutBtn.style.display = 'none';
         adminSection.style.display = 'none';
-        loadDocuments(); // Guests can still see documents
+        loadDocuments(false);
     }
 });
 
@@ -49,7 +51,7 @@ logoutBtn.addEventListener('click', () => {
     signOut(auth);
 });
 
-// Add Document (Admin only)
+// Add Document
 letterForm.addEventListener('submit', e => {
     e.preventDefault();
     const title = document.getElementById('title').value;
@@ -61,22 +63,35 @@ letterForm.addEventListener('submit', e => {
         timestamp: serverTimestamp()
     }).then(() => {
         letterForm.reset();
-        loadDocuments();
+        loadDocuments(true);
     }).catch(error => alert(error.message));
 });
 
 // Load Documents
-function loadDocuments() {
+function loadDocuments(isAdmin) {
     documentList.innerHTML = '';
     const q = query(collection(db, 'documents'), orderBy('timestamp', 'desc'));
     getDocs(q).then(querySnapshot => {
-        querySnapshot.forEach(doc => {
-            const data = doc.data();
+        querySnapshot.forEach(docSnap => {
+            const data = docSnap.data();
             const li = document.createElement('li');
-            li.innerHTML = `${data.title} <button onclick="downloadDoc('${data.title}', '${data.content}')">Download</button>`;
+            let buttons = `<button onclick="downloadDoc('${data.title}', '${data.content}')">Download</button>`;
+            if (isAdmin) {
+                buttons += ` <button onclick="deleteDoc('${docSnap.id}')">Delete</button>`;
+            }
+            li.innerHTML = `${data.title} ${buttons}`;
             documentList.appendChild(li);
         });
-    });
+    }).catch(error => console.error("Error loading documents:", error));
+}
+
+// Delete Document
+function deleteDoc(docId) {
+    if (confirm("Are you sure you want to delete this document?")) {
+        deleteDoc(doc(db, 'documents', docId))
+            .then(() => loadDocuments(true))
+            .catch(error => alert(error.message));
+    }
 }
 
 // Generate and Download Docx
@@ -101,5 +116,6 @@ function downloadDoc(title, content) {
     });
 }
 
-// Expose downloadDoc to global scope (since onclick needs it)
+// Expose functions to global scope
 window.downloadDoc = downloadDoc;
+window.deleteDoc = deleteDoc;
