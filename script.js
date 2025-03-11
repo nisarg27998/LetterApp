@@ -1,9 +1,9 @@
 // Firebase Imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, orderBy, query, serverTimestamp, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, orderBy, query, serverTimestamp, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Hardcode config
+// Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyCroQ0YiVCM1N0Rc3r0UF8Fi7sKE936rag",
     authDomain: "letterapp-6ce0e.firebaseapp.com",
@@ -30,6 +30,7 @@ const formTitle = document.getElementById('form-title');
 const editId = document.getElementById('edit-id');
 const cancelEditBtn = document.getElementById('cancel-edit');
 const documentList = document.getElementById('document-list');
+const searchInput = document.getElementById('search-input');
 
 // Admin Email
 const ADMIN_EMAIL = "admin@example.com";
@@ -115,7 +116,6 @@ letterForm.addEventListener('submit', e => {
     }
 
     if (id) {
-        // Edit existing document
         updateDoc(doc(db, 'documents', id), {
             title,
             content,
@@ -125,7 +125,6 @@ letterForm.addEventListener('submit', e => {
             loadDocuments(true);
         }).catch(error => alert(error.message));
     } else {
-        // Add new document
         addDoc(collection(db, 'documents'), {
             title,
             content,
@@ -142,21 +141,33 @@ cancelEditBtn.addEventListener('click', () => {
     resetForm();
 });
 
-// Load Documents
+// Search Documents
+searchInput.addEventListener('input', () => {
+    loadDocuments(auth.currentUser && auth.currentUser.email === ADMIN_EMAIL);
+});
+
+// Load Documents with Search
 function loadDocuments(isAdmin) {
     documentList.innerHTML = '';
+    const searchTerm = searchInput.value.trim().toLowerCase();
     const q = query(collection(db, 'documents'), orderBy('timestamp', 'desc'));
+
     getDocs(q).then(querySnapshot => {
         querySnapshot.forEach(docSnap => {
             const data = docSnap.data();
-            const li = document.createElement('li');
-            let buttons = `<button onclick="downloadDoc('${data.title}', '${data.content}')">Download</button>`;
-            if (isAdmin) {
-                buttons += ` <button onclick="editDoc('${docSnap.id}', '${data.title}', '${data.content}')">Edit</button>`;
-                buttons += ` <button onclick="removeDoc('${docSnap.id}')">Delete</button>`;
+            const title = data.title.toLowerCase();
+
+            // Filter by search term
+            if (!searchTerm || title.includes(searchTerm)) {
+                const li = document.createElement('li');
+                let buttons = `<button onclick="downloadDoc('${data.title}', '${data.content}')">Download</button>`;
+                if (isAdmin) {
+                    buttons += ` <button onclick="editDoc('${docSnap.id}', '${data.title}', '${data.content}')">Edit</button>`;
+                    buttons += ` <button onclick="removeDoc('${docSnap.id}')">Delete</button>`;
+                }
+                li.innerHTML = `${data.title} ${buttons}`;
+                documentList.appendChild(li);
             }
-            li.innerHTML = `${data.title} ${buttons}`;
-            documentList.appendChild(li);
         });
     }).catch(error => console.error("Error loading documents:", error));
 }
