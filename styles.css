@@ -198,3 +198,11 @@ textarea {
     margin-left: 10px;
     background-color: #e74c3c;
 }
+
+#admin-section textarea {
+    min-height: 60px; /* Smaller for address fields */
+}
+
+#admin-section input, #admin-section textarea {
+    margin-bottom: 10px; /* Consistent spacing */
+}

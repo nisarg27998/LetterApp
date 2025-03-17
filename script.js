@@ -102,37 +102,49 @@ logoutBtn.addEventListener('click', () => {
 // Add or Edit Document
 letterForm.addEventListener('submit', e => {
     e.preventDefault();
+    const senderName = document.getElementById('sender-name').value.trim();
+    const senderAddress = document.getElementById('sender-address').value.trim();
+    const recipientName = document.getElementById('recipient-name').value.trim();
+    const recipientAddress = document.getElementById('recipient-address').value.trim();
+    const salutation = document.getElementById('salutation').value.trim();
     const title = document.getElementById('title').value.trim();
     const content = document.getElementById('content').value.trim();
     const id = editId.value;
 
-    if (!title || !content) {
-        alert("Please fill in both title and content.");
+    if (!senderName || !senderAddress || !recipientName || !recipientAddress || !salutation || !title || !content) {
+        alert("Please fill in all fields.");
         return;
     }
     if (title.length > 100) {
-        alert("Title must be 100 characters or less.");
+        alert("Subject/Title must be 100 characters or less.");
         return;
     }
 
+    const documentData = {
+        senderName,
+        senderAddress,
+        recipientName,
+        recipientAddress,
+        salutation,
+        title,
+        content,
+        timestamp: serverTimestamp()
+    };
+
     if (id) {
-        updateDoc(doc(db, 'documents', id), {
-            title,
-            content,
-            timestamp: serverTimestamp()
-        }).then(() => {
-            resetForm();
-            loadDocuments(true);
-        }).catch(error => alert(error.message));
+        updateDoc(doc(db, 'documents', id), documentData)
+            .then(() => {
+                resetForm();
+                loadDocuments(true);
+            })
+            .catch(error => alert(error.message));
     } else {
-        addDoc(collection(db, 'documents'), {
-            title,
-            content,
-            timestamp: serverTimestamp()
-        }).then(() => {
-            resetForm();
-            loadDocuments(true);
-        }).catch(error => alert(error.message));
+        addDoc(collection(db, 'documents'), documentData)
+            .then(() => {
+                resetForm();
+                loadDocuments(true);
+            })
+            .catch(error => alert(error.message));
     }
 });
 
@@ -159,9 +171,9 @@ function loadDocuments(isAdmin) {
 
             if (!searchTerm || title.includes(searchTerm)) {
                 const li = document.createElement('li');
-                let buttons = `<button onclick="downloadDoc('${data.title}', '${data.content}')">Download</button>`;
+                let buttons = `<button onclick="downloadDoc('${data.senderName}', '${data.senderAddress}', '${data.recipientName}', '${data.recipientAddress}', '${data.salutation}', '${data.title}', '${data.content}')">Download</button>`;
                 if (isAdmin) {
-                    buttons += ` <button onclick="editDoc('${docSnap.id}', '${data.title}', '${data.content}')">Edit</button>`;
+                    buttons += ` <button onclick="editDoc('${docSnap.id}', '${data.senderName}', '${data.senderAddress}', '${data.recipientName}', '${data.recipientAddress}', '${data.salutation}', '${data.title}', '${data.content}')">Edit</button>`;
                     buttons += ` <button onclick="removeDoc('${docSnap.id}')">Delete</button>`;
                 }
                 li.innerHTML = `${data.title} ${buttons}`;
@@ -172,9 +184,14 @@ function loadDocuments(isAdmin) {
 }
 
 // Edit Document
-function editDoc(id, title, content) {
+function editDoc(id, senderName, senderAddress, recipientName, recipientAddress, salutation, title, content) {
     formTitle.textContent = "Edit Letter/Agenda";
     editId.value = id;
+    document.getElementById('sender-name').value = senderName;
+    document.getElementById('sender-address').value = senderAddress;
+    document.getElementById('recipient-name').value = recipientName;
+    document.getElementById('recipient-address').value = recipientAddress;
+    document.getElementById('salutation').value = salutation;
     document.getElementById('title').value = title;
     document.getElementById('content').value = content;
     cancelEditBtn.style.display = 'inline-block';
@@ -199,7 +216,7 @@ function removeDoc(docId) {
 }
 
 // Generate and Download Docx in Letter Format
-function downloadDoc(title, content) {
+function downloadDoc(senderName, senderAddress, recipientName, recipientAddress, salutation, title, content) {
     const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -221,13 +238,7 @@ function downloadDoc(title, content) {
             children: [
                 // Sender's Address
                 new docx.Paragraph({
-                    children: [
-                        new docx.TextRun("Your Name"),
-                        new docx.TextRun({ break: 1 }),
-                        new docx.TextRun("123 Your Street"),
-                        new docx.TextRun({ break: 1 }),
-                        new docx.TextRun("City, State, ZIP")
-                    ],
+                    children: senderAddress.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
                     spacing: { after: 200 }
                 }),
                 // Date
@@ -235,25 +246,24 @@ function downloadDoc(title, content) {
                     children: [new docx.TextRun(currentDate)],
                     spacing: { after: 400 }
                 }),
-                // Recipient's Address (using title as recipient or subject)
+                // Recipient's Address
                 new docx.Paragraph({
-                    children: [
-                        new docx.TextRun(title), // Could be "Mr. John Doe" or subject
-                        new docx.TextRun({ break: 1 }),
-                        new docx.TextRun("456 Recipient Street"),
-                        new docx.TextRun({ break: 1 }),
-                        new docx.TextRun("City, State, ZIP")
-                    ],
+                    children: recipientAddress.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
                     spacing: { after: 400 }
                 }),
                 // Salutation
                 new docx.Paragraph({
-                    children: [new docx.TextRun(`Dear ${title.split(' ')[0]},`)], // Simplistic salutation
+                    children: [new docx.TextRun(salutation)],
+                    spacing: { after: 200 }
+                }),
+                // Subject/Title
+                new docx.Paragraph({
+                    children: [new docx.TextRun({ text: `Subject: ${title}`, bold: true })],
                     spacing: { after: 200 }
                 }),
                 // Body
-                new docx. Paragraph({
-                    children: [new docx.TextRun(content)],
+                new docx.Paragraph({
+                    children: content.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
                     spacing: { after: 400 }
                 }),
                 // Closing
@@ -263,11 +273,7 @@ function downloadDoc(title, content) {
                 }),
                 // Signature
                 new docx.Paragraph({
-                    children: [
-                        new docx.TextRun("Your Name"),
-                        new docx.TextRun({ break: 1 }),
-                        new docx.TextRun("Your Title")
-                    ]
+                    children: [new docx.TextRun(senderName)]
                 })
             ]
         }]
