@@ -157,7 +157,6 @@ function loadDocuments(isAdmin) {
             const data = docSnap.data();
             const title = data.title.toLowerCase();
 
-            // Filter by search term
             if (!searchTerm || title.includes(searchTerm)) {
                 const li = document.createElement('li');
                 let buttons = `<button onclick="downloadDoc('${data.title}', '${data.content}')">Download</button>`;
@@ -199,18 +198,76 @@ function removeDoc(docId) {
     }
 }
 
-// Generate and Download Docx
+// Generate and Download Docx in Letter Format
 function downloadDoc(title, content) {
+    const currentDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
     const doc = new docx.Document({
         sections: [{
-            properties: {},
+            properties: {
+                page: {
+                    margin: {
+                        top: docx.convertInchesToTwips(1),
+                        bottom: docx.convertInchesToTwips(1),
+                        left: docx.convertInchesToTwips(1),
+                        right: docx.convertInchesToTwips(1)
+                    }
+                }
+            },
             children: [
+                // Sender's Address
                 new docx.Paragraph({
-                    text: title,
-                    heading: docx.HeadingLevel.HEADING_1
+                    children: [
+                        new docx.TextRun("Your Name"),
+                        new docx.TextRun({ break: 1 }),
+                        new docx.TextRun("123 Your Street"),
+                        new docx.TextRun({ break: 1 }),
+                        new docx.TextRun("City, State, ZIP")
+                    ],
+                    spacing: { after: 200 }
                 }),
+                // Date
                 new docx.Paragraph({
-                    text: content
+                    children: [new docx.TextRun(currentDate)],
+                    spacing: { after: 400 }
+                }),
+                // Recipient's Address (using title as recipient or subject)
+                new docx.Paragraph({
+                    children: [
+                        new docx.TextRun(title), // Could be "Mr. John Doe" or subject
+                        new docx.TextRun({ break: 1 }),
+                        new docx.TextRun("456 Recipient Street"),
+                        new docx.TextRun({ break: 1 }),
+                        new docx.TextRun("City, State, ZIP")
+                    ],
+                    spacing: { after: 400 }
+                }),
+                // Salutation
+                new docx.Paragraph({
+                    children: [new docx.TextRun(`Dear ${title.split(' ')[0]},`)], // Simplistic salutation
+                    spacing: { after: 200 }
+                }),
+                // Body
+                new docx. Paragraph({
+                    children: [new docx.TextRun(content)],
+                    spacing: { after: 400 }
+                }),
+                // Closing
+                new docx.Paragraph({
+                    children: [new docx.TextRun("Sincerely,")],
+                    spacing: { after: 200 }
+                }),
+                // Signature
+                new docx.Paragraph({
+                    children: [
+                        new docx.TextRun("Your Name"),
+                        new docx.TextRun({ break: 1 }),
+                        new docx.TextRun("Your Title")
+                    ]
                 })
             ]
         }]
