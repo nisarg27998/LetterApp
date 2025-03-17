@@ -225,6 +225,11 @@ function removeDoc(docId) {
 
 // Generate and Download Docx in Letter Format
 function downloadDoc(senderName, senderAddress, recipientName, recipientAddress, salutation, title, content) {
+    if (!window.docx || !window.docx.Document) {
+        alert("Error: docx library not loaded. Please refresh the page.");
+        return;
+    }
+
     const currentDate = new Date().toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -236,27 +241,25 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
             properties: {
                 page: {
                     margin: {
-                        top: window.docx.convertInchesToTwips(1),
-                        bottom: window.docx.convertInchesToTwips(1),
-                        left: window.docx.convertInchesToTwips(1),
-                        right: window.docx.convertInchesToTwips(1)
+                        top: window.docx.convertInchesToTwip(1),
+                        bottom: window.docx.convertInchesToTwip(1),
+                        left: window.docx.convertInchesToTwip(1),
+                        right: window.docx.convertInchesToTwip(1)
                     }
                 }
             },
             children: [
-                // Sender's Address
                 new window.docx.Paragraph({
                     children: senderAddress.split('\n').map(line => 
                         new window.docx.TextRun({
                             text: line,
                             font: "Times New Roman",
-                            size: 24 // 12pt (size is in half-points)
+                            size: 24
                         })
                     ),
                     spacing: { after: 200 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
-                // Date
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: currentDate,
@@ -266,7 +269,6 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 400 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
-                // Recipient's Address
                 new window.docx.Paragraph({
                     children: recipientAddress.split('\n').map(line => 
                         new window.docx.TextRun({
@@ -278,7 +280,6 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 400 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
-                // Salutation
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: salutation,
@@ -288,7 +289,6 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 200 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
-                // Subject/Title
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: `Subject: ${title}`,
@@ -299,7 +299,6 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 200 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
-                // Body
                 new window.docx.Paragraph({
                     children: content.split('\n').map(line => 
                         new window.docx.TextRun({
@@ -311,7 +310,6 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 400 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
-                // Closing
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: "Sincerely,",
@@ -321,7 +319,6 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 200 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
-                // Signature
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: senderName,
