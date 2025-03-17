@@ -249,6 +249,7 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                 }
             },
             children: [
+                // Sender's Address
                 new window.docx.Paragraph({
                     children: senderAddress.split('\n').map(line => 
                         new window.docx.TextRun({
@@ -260,6 +261,7 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 200 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
+                // Date
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: currentDate,
@@ -269,6 +271,17 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 400 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
+                // Recipient Name (New Addition)
+                new window.docx.Paragraph({
+                    children: [new window.docx.TextRun({
+                        text: recipientName,
+                        font: "Times New Roman",
+                        size: 24
+                    })],
+                    spacing: { after: 200 },
+                    alignment: window.docx.AlignmentType.LEFT
+                }),
+                // Recipient's Address
                 new window.docx.Paragraph({
                     children: recipientAddress.split('\n').map(line => 
                         new window.docx.TextRun({
@@ -280,6 +293,7 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 400 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
+                // Salutation
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: salutation,
@@ -289,6 +303,7 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 200 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
+                // Subject/Title
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: `Subject: ${title}`,
@@ -299,6 +314,7 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 200 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
+                // Body
                 new window.docx.Paragraph({
                     children: content.split('\n').map(line => 
                         new window.docx.TextRun({
@@ -310,6 +326,7 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 400 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
+                // Closing
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: "Sincerely,",
@@ -319,6 +336,7 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
                     spacing: { after: 200 },
                     alignment: window.docx.AlignmentType.LEFT
                 }),
+                // Signature
                 new window.docx.Paragraph({
                     children: [new window.docx.TextRun({
                         text: senderName,
