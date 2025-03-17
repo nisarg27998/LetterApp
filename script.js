@@ -102,13 +102,13 @@ logoutBtn.addEventListener('click', () => {
 // Add or Edit Document
 letterForm.addEventListener('submit', e => {
     e.preventDefault();
-    const senderName = document.getElementById('sender-name').value.trim();
-    const senderAddress = document.getElementById('sender-address').value.trim();
-    const recipientName = document.getElementById('recipient-name').value.trim();
-    const recipientAddress = document.getElementById('recipient-address').value.trim();
-    const salutation = document.getElementById('salutation').value.trim();
-    const title = document.getElementById('title').value.trim();
-    const content = document.getElementById('content').value.trim();
+    const senderName = document.getElementById('sender-name')?.value.trim();
+    const senderAddress = document.getElementById('sender-address')?.value.trim();
+    const recipientName = document.getElementById('recipient-name')?.value.trim();
+    const recipientAddress = document.getElementById('recipient-address')?.value.trim();
+    const salutation = document.getElementById('salutation')?.value.trim();
+    const title = document.getElementById('title')?.value.trim();
+    const content = document.getElementById('content')?.value.trim();
     const id = editId.value;
 
     if (!senderName || !senderAddress || !recipientName || !recipientAddress || !salutation || !title || !content) {
@@ -130,8 +130,6 @@ letterForm.addEventListener('submit', e => {
         content,
         timestamp: serverTimestamp()
     };
-
-    console.log("Saving to Firestore:", documentData); // Debug: Check data before saving
 
     if (id) {
         updateDoc(doc(db, 'documents', id), documentData)
@@ -173,10 +171,17 @@ function loadDocuments(isAdmin) {
 
             if (!searchTerm || title.includes(searchTerm)) {
                 const li = document.createElement('li');
-                console.log("Document data:", data); // Debug: Check all fields
-                let buttons = `<button onclick="downloadDoc('${data.senderName || 'Unknown'}', '${data.senderAddress || ''}', '${data.recipientName || 'Unknown'}', '${data.recipientAddress || ''}', '${data.salutation || 'Dear Sir/Madam'}', '${data.title}', '${data.content}')">Download</button>`;
+                const safeSenderName = (data.senderName || 'Unknown').replace(/'/g, "\\'");
+                const safeSenderAddress = (data.senderAddress || '').replace(/'/g, "\\'");
+                const safeRecipientName = (data.recipientName || 'Unknown').replace(/'/g, "\\'");
+                const safeRecipientAddress = (data.recipientAddress || '').replace(/'/g, "\\'");
+                const safeSalutation = (data.salutation || 'Dear Sir/Madam').replace(/'/g, "\\'");
+                const safeTitle = data.title.replace(/'/g, "\\'");
+                const safeContent = data.content.replace(/'/g, "\\'");
+
+                let buttons = `<button onclick="downloadDoc('${safeSenderName}', '${safeSenderAddress}', '${safeRecipientName}', '${safeRecipientAddress}', '${safeSalutation}', '${safeTitle}', '${safeContent}')">Download</button>`;
                 if (isAdmin) {
-                    buttons += ` <button onclick="editDoc('${docSnap.id}', '${data.senderName || ''}', '${data.senderAddress || ''}', '${data.recipientName || ''}', '${data.recipientAddress || ''}', '${data.salutation || ''}', '${data.title}', '${data.content}')">Edit</button>`;
+                    buttons += ` <button onclick="editDoc('${docSnap.id}', '${safeSenderName}', '${safeSenderAddress}', '${safeRecipientName}', '${safeRecipientAddress}', '${safeSalutation}', '${safeTitle}', '${safeContent}')">Edit</button>`;
                     buttons += ` <button onclick="removeDoc('${docSnap.id}')">Delete</button>`;
                 }
                 li.innerHTML = `${data.title} ${buttons}`;
@@ -226,55 +231,110 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
         day: 'numeric'
     });
 
-    const doc = new docx.Document({
+    const doc = new window.docx.Document({
         sections: [{
             properties: {
                 page: {
                     margin: {
-                        top: 1440,    // 1 inch = 1440 twips
-                        bottom: 1440, // 1 inch = 1440 twips
-                        left: 1440,   // 1 inch = 1440 twips
-                        right: 1440   // 1 inch = 1440 twips
+                        top: window.docx.convertInchesToTwips(1),
+                        bottom: window.docx.convertInchesToTwips(1),
+                        left: window.docx.convertInchesToTwips(1),
+                        right: window.docx.convertInchesToTwips(1)
                     }
                 }
             },
             children: [
-                new docx.Paragraph({
-                    children: senderAddress.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
-                    spacing: { after: 200 }
+                // Sender's Address
+                new window.docx.Paragraph({
+                    children: senderAddress.split('\n').map(line => 
+                        new window.docx.TextRun({
+                            text: line,
+                            font: "Times New Roman",
+                            size: 24 // 12pt (size is in half-points)
+                        })
+                    ),
+                    spacing: { after: 200 },
+                    alignment: window.docx.AlignmentType.LEFT
                 }),
-                new docx.Paragraph({
-                    children: [new docx.TextRun(currentDate)],
-                    spacing: { after: 400 }
+                // Date
+                new window.docx.Paragraph({
+                    children: [new window.docx.TextRun({
+                        text: currentDate,
+                        font: "Times New Roman",
+                        size: 24
+                    })],
+                    spacing: { after: 400 },
+                    alignment: window.docx.AlignmentType.LEFT
                 }),
-                new docx.Paragraph({
-                    children: recipientAddress.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
-                    spacing: { after: 400 }
+                // Recipient's Address
+                new window.docx.Paragraph({
+                    children: recipientAddress.split('\n').map(line => 
+                        new window.docx.TextRun({
+                            text: line,
+                            font: "Times New Roman",
+                            size: 24
+                        })
+                    ),
+                    spacing: { after: 400 },
+                    alignment: window.docx.AlignmentType.LEFT
                 }),
-                new docx.Paragraph({
-                    children: [new docx.TextRun(salutation)],
-                    spacing: { after: 200 }
+                // Salutation
+                new window.docx.Paragraph({
+                    children: [new window.docx.TextRun({
+                        text: salutation,
+                        font: "Times New Roman",
+                        size: 24
+                    })],
+                    spacing: { after: 200 },
+                    alignment: window.docx.AlignmentType.LEFT
                 }),
-                new docx.Paragraph({
-                    children: [new docx.TextRun({ text: `Subject: ${title}`, bold: true })],
-                    spacing: { after: 200 }
+                // Subject/Title
+                new window.docx.Paragraph({
+                    children: [new window.docx.TextRun({
+                        text: `Subject: ${title}`,
+                        bold: true,
+                        font: "Times New Roman",
+                        size: 24
+                    })],
+                    spacing: { after: 200 },
+                    alignment: window.docx.AlignmentType.LEFT
                 }),
-                new docx.Paragraph({
-                    children: content.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
-                    spacing: { after: 400 }
+                // Body
+                new window.docx.Paragraph({
+                    children: content.split('\n').map(line => 
+                        new window.docx.TextRun({
+                            text: line,
+                            font: "Times New Roman",
+                            size: 24
+                        })
+                    ),
+                    spacing: { after: 400 },
+                    alignment: window.docx.AlignmentType.LEFT
                 }),
-                new docx.Paragraph({
-                    children: [new docx.TextRun("Sincerely,")],
-                    spacing: { after: 200 }
+                // Closing
+                new window.docx.Paragraph({
+                    children: [new window.docx.TextRun({
+                        text: "Sincerely,",
+                        font: "Times New Roman",
+                        size: 24
+                    })],
+                    spacing: { after: 200 },
+                    alignment: window.docx.AlignmentType.LEFT
                 }),
-                new docx.Paragraph({
-                    children: [new docx.TextRun(senderName)]
+                // Signature
+                new window.docx.Paragraph({
+                    children: [new window.docx.TextRun({
+                        text: senderName,
+                        font: "Times New Roman",
+                        size: 24
+                    })],
+                    alignment: window.docx.AlignmentType.LEFT
                 })
             ]
         }]
     });
 
-    docx.Packer.toBlob(doc).then(blob => {
+    window.docx.Packer.toBlob(doc).then(blob => {
         saveAs(blob, `${title}.docx`);
     });
 }
