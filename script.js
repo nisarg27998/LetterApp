@@ -131,6 +131,8 @@ letterForm.addEventListener('submit', e => {
         timestamp: serverTimestamp()
     };
 
+    console.log("Saving to Firestore:", documentData); // Debug: Check data before saving
+
     if (id) {
         updateDoc(doc(db, 'documents', id), documentData)
             .then(() => {
@@ -171,9 +173,10 @@ function loadDocuments(isAdmin) {
 
             if (!searchTerm || title.includes(searchTerm)) {
                 const li = document.createElement('li');
-                let buttons = `<button onclick="downloadDoc('${data.senderName}', '${data.senderAddress}', '${data.recipientName}', '${data.recipientAddress}', '${data.salutation}', '${data.title}', '${data.content}')">Download</button>`;
+                console.log("Document data:", data); // Debug: Check all fields
+                let buttons = `<button onclick="downloadDoc('${data.senderName || 'Unknown'}', '${data.senderAddress || ''}', '${data.recipientName || 'Unknown'}', '${data.recipientAddress || ''}', '${data.salutation || 'Dear Sir/Madam'}', '${data.title}', '${data.content}')">Download</button>`;
                 if (isAdmin) {
-                    buttons += ` <button onclick="editDoc('${docSnap.id}', '${data.senderName}', '${data.senderAddress}', '${data.recipientName}', '${data.recipientAddress}', '${data.salutation}', '${data.title}', '${data.content}')">Edit</button>`;
+                    buttons += ` <button onclick="editDoc('${docSnap.id}', '${data.senderName || ''}', '${data.senderAddress || ''}', '${data.recipientName || ''}', '${data.recipientAddress || ''}', '${data.salutation || ''}', '${data.title}', '${data.content}')">Edit</button>`;
                     buttons += ` <button onclick="removeDoc('${docSnap.id}')">Delete</button>`;
                 }
                 li.innerHTML = `${data.title} ${buttons}`;
@@ -228,50 +231,42 @@ function downloadDoc(senderName, senderAddress, recipientName, recipientAddress,
             properties: {
                 page: {
                     margin: {
-                        top: docx.convertInchesToTwips(1),
-                        bottom: docx.convertInchesToTwips(1),
-                        left: docx.convertInchesToTwips(1),
-                        right: docx.convertInchesToTwips(1)
+                        top: 1440,    // 1 inch = 1440 twips
+                        bottom: 1440, // 1 inch = 1440 twips
+                        left: 1440,   // 1 inch = 1440 twips
+                        right: 1440   // 1 inch = 1440 twips
                     }
                 }
             },
             children: [
-                // Sender's Address
                 new docx.Paragraph({
                     children: senderAddress.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
                     spacing: { after: 200 }
                 }),
-                // Date
                 new docx.Paragraph({
                     children: [new docx.TextRun(currentDate)],
                     spacing: { after: 400 }
                 }),
-                // Recipient's Address
                 new docx.Paragraph({
                     children: recipientAddress.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
                     spacing: { after: 400 }
                 }),
-                // Salutation
                 new docx.Paragraph({
                     children: [new docx.TextRun(salutation)],
                     spacing: { after: 200 }
                 }),
-                // Subject/Title
                 new docx.Paragraph({
                     children: [new docx.TextRun({ text: `Subject: ${title}`, bold: true })],
                     spacing: { after: 200 }
                 }),
-                // Body
                 new docx.Paragraph({
                     children: content.split('\n').map(line => new docx.TextRun({ text: line, break: line ? 1 : 0 })),
                     spacing: { after: 400 }
                 }),
-                // Closing
                 new docx.Paragraph({
                     children: [new docx.TextRun("Sincerely,")],
                     spacing: { after: 200 }
                 }),
-                // Signature
                 new docx.Paragraph({
                     children: [new docx.TextRun(senderName)]
                 })
