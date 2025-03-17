@@ -15,7 +15,6 @@
         </div>
     </header>
 
-    <!-- Login Section -->
     <section id="login-section" style="display: none;">
         <h2>Admin Login</h2>
         <form id="login-form">
@@ -28,7 +27,6 @@
         </form>
     </section>
 
-    <!-- Admin Form (Add/Edit) -->
     <section id="admin-section" style="display: none;">
         <h2 id="form-title">Create Letter/Agenda</h2>
         <form id="letter-form">
@@ -52,7 +50,6 @@
         </form>
     </section>
 
-    <!-- Guest Download Section -->
     <section id="guest-section">
         <h2>Available Documents</h2>
         <div id="search-bar">
@@ -62,8 +59,9 @@
     </section>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/docx@7.3.0/build/index.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
     <script type="module" src="script.js"></script>
 </body>
 </html>
