@@ -20,6 +20,7 @@ import {
   doc,
   updateDoc,
   getDoc,
+  setDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -80,9 +81,10 @@ function handleUserLoggedIn(user) {
         DOM.welcomeMessage.textContent = "Hi, Admin";
 
         // Show admin-specific sections
-        toggleVisibility(DOM.adminSection, true);
-        toggleVisibility(DOM.roleManagementSection, true);
+        toggleVisibility(DOM.adminSection, true); // Show Create Letter/Agenda
+        toggleVisibility(DOM.roleManagementSection, true); // Show Manage Roles
         toggleVisibility(DOM.adminNav, true); // Show admin navigation bar
+        toggleVisibility(DOM.guestSection, false); // Hide Available Documents
         populateUserDropdown(); // Populate the dropdown with user emails
         loadDocuments(true); // Load documents with admin privileges
       } else {
@@ -90,9 +92,10 @@ function handleUserLoggedIn(user) {
         DOM.welcomeMessage.textContent = `Hi, ${user.displayName || "User"}`;
 
         // Show sections for regular users
-        toggleVisibility(DOM.adminSection, true); // Allow document creation
-        toggleVisibility(DOM.roleManagementSection, false); // Hide role management
+        toggleVisibility(DOM.adminSection, false); // Hide Create Letter/Agenda
+        toggleVisibility(DOM.roleManagementSection, false); // Hide Manage Roles
         toggleVisibility(DOM.adminNav, false); // Hide admin navigation bar
+        toggleVisibility(DOM.guestSection, true); // Show Available Documents
         loadDocuments(false); // Load documents with user privileges
       }
     })
@@ -216,14 +219,25 @@ DOM.registrationForm.addEventListener("submit", (e) => {
   createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
       const user = userCredential.user;
-      return updateProfile(user, { displayName: username });
+      console.log("User created:", user);
+
+      // Update the user's display name
+      return Promise.all([
+        updateProfile(user, { displayName: username }),
+        setDoc(doc(db, "users", user.uid), {
+          email: email,
+          role: "viewer", // Assign the default role as "viewer"
+        }),
+      ]);
     })
     .then(() => {
+      console.log("User added to Firestore");
       alert("Registration successful! Please log in.");
       toggleVisibility(DOM.registrationSection, false);
       toggleVisibility(DOM.loginSection, true);
     })
     .catch((error) => {
+      console.error("Error during registration:", error);
       displayError(DOM.registrationError, `Registration failed: ${error.message}`);
     });
 });
@@ -240,10 +254,10 @@ DOM.registerBtn.addEventListener("click", () => {
 DOM.letterForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const formData = getFormData();
-  if (!isFormDataValid(formData)) return alert("Please fill the details");
+  if (!isFormDataValid(formData)) return alert("Please fill in all fields.");
 
   const id = DOM.editId.value;
-  id ? updateDocument(id, formData) : addDocument(formData);
+  id ? updateDocument(id, formData) : addDocument(formData); // Call addDocument for new documents
 });
 
 function getFormData() {
@@ -649,7 +663,7 @@ document.querySelectorAll("#nav-links a").forEach((link) => {
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Add event listeners here
+  // Add event listeners for login, logout, and register buttons
   DOM.loginBtn.addEventListener("click", () => {
     toggleVisibility(DOM.loginSection, true); // Show the login section
     toggleVisibility(DOM.registrationSection, false); // Hide the registration section
@@ -661,14 +675,27 @@ document.addEventListener("DOMContentLoaded", () => {
         .then(() => {
           console.log("Logged out successfully");
           handleUserLoggedOut(); // Reset the UI after logout
+          alert("You have been logged out.");
         })
-        .catch((error) => alert("Logout failed: " + error.message));
+        .catch((error) => {
+          console.error("Logout failed:", error.message);
+          alert("Logout failed: " + error.message);
+        });
     }
   });
 
   DOM.registerBtn.addEventListener("click", () => {
-    toggleVisibility(DOM.registrationSection, true);
-    toggleVisibility(DOM.loginSection, false);
+    toggleVisibility(DOM.registrationSection, true); // Show the registration section
+    toggleVisibility(DOM.loginSection, false); // Hide the login section
+  });
+
+  // Add event listeners for navigation links
+  document.querySelectorAll("#nav-links a").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const targetId = e.target.getAttribute("href").substring(1); // Get the target section ID
+      showSession(targetId);
+    });
   });
 });
 
@@ -679,7 +706,31 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+  DOM.loginBtn.addEventListener("click", () => {
+    toggleVisibility(DOM.loginSection, true); // Show the login section
+    toggleVisibility(DOM.registrationSection, false); // Hide the registration section
+  });
+});
+
 console.log("Login Button:", DOM.loginBtn);
 console.log("Logout Button:", DOM.logoutBtn);
 console.log("Register Button:", DOM.registerBtn);
 console.log("Registration Section:", DOM.registrationSection);
+
+function addDocument(data) {
+  const documentsRef = collection(db, "documents");
+  addDoc(documentsRef, {
+    ...data,
+    timestamp: serverTimestamp(), // Add a timestamp
+  })
+    .then(() => {
+      alert("Document added successfully!");
+      resetForm(); // Reset the form after successful submission
+      loadDocuments(true); // Reload the documents list
+    })
+    .catch((error) => {
+      console.error("Error adding document:", error);
+      alert("Failed to add document: " + error.message);
+    });
+}
