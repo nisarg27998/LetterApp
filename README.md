@@ -25,6 +25,7 @@ A web application for creating, managing, and downloading letters and agendas. T
    ```bash
    git clone https://github.com/nisarg27998/letter-agenda-writer.git
    cd letter-agenda-writer
+   ```
 2. Open index.html in your browser to run the application.
 
 ## Firebase Setup
@@ -32,15 +33,15 @@ A web application for creating, managing, and downloading letters and agendas. T
 1. Create a Firebase project at Firebase Console.
 2. Enable Authentication and Firestore Database in your Firebase project.
 3. Replace the Firebase configuration in script.js with your project's configuration:
-   
+
 ```javascript
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
 };
 ```
 
@@ -53,6 +54,7 @@ const firebaseConfig = {
 5. Download documents as .docx files.
 
 ## Project Structure
+
 ```
 letter-agenda-website/
 ├── [index.html](http://_vscodecontentref_/0)       # Main HTML file
