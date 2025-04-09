@@ -5,6 +5,8 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  updateProfile,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
@@ -17,6 +19,7 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -29,10 +32,13 @@ const db = getFirestore(app);
 const DOM = {
   loginBtn: document.getElementById("login-btn"),
   logoutBtn: document.getElementById("logout-btn"),
+  registerBtn: document.getElementById("register-btn"),
   loginSection: document.getElementById("login-section"),
+  welcomeMessage: document.getElementById("welcome-message"),
+  adminSection: document.getElementById("admin-section"),
+  adminNav: document.getElementById("admin-nav"),
   loginForm: document.getElementById("login-form"),
   loginError: document.getElementById("login-error"),
-  adminSection: document.getElementById("admin-section"),
   letterForm: document.getElementById("letter-form"),
   formTitle: document.getElementById("form-title"),
   editId: document.getElementById("edit-id"),
@@ -45,6 +51,10 @@ const DOM = {
   docxBtn: document.getElementById("docx-btn"),
   letterBtn: document.getElementById("letter-btn"),
   agendaBtn: document.getElementById("agenda-btn"),
+  registrationForm: document.getElementById("registration-form"),
+  registrationSection: document.getElementById("registration-section"),
+  roleForm: document.getElementById("role-form"),
+  roleManagementSection: document.getElementById("role-management-section"),
 };
 
 // Constants
@@ -56,28 +66,53 @@ onAuthStateChanged(auth, (user) =>
 );
 
 function handleUserLoggedIn(user) {
-  toggleVisibility(DOM.loginBtn, false);
-  toggleVisibility(DOM.logoutBtn, true);
-  toggleVisibility(DOM.loginSection, false);
+  toggleVisibility(DOM.loginBtn, false); // Hide the login button
+  toggleVisibility(DOM.logoutBtn, true); // Show the logout button
+  toggleVisibility(DOM.registerBtn, false); // Hide the register button
+  toggleVisibility(DOM.loginSection, false); // Hide the login section
 
-  if (user.email === ADMIN_EMAIL) {
-    toggleVisibility(DOM.adminSection, true);
-    loadDocuments(true);
-  } else {
-    loadDocuments(false);
-  }
+  // Display a welcome message
+  DOM.welcomeMessage.textContent = `Hi, ${user.displayName || "User"}`;
+
+  // Check if the user is an admin
+  getDoc(doc(db, "users", user.uid))
+    .then((userDoc) => {
+      const userData = userDoc.data();
+      if (userData.role === "admin") {
+        // Show admin-specific sections
+        toggleVisibility(DOM.adminSection, true);
+        toggleVisibility(DOM.roleManagementSection, true);
+        toggleVisibility(DOM.adminNav, true); // Show admin navigation bar
+        populateUserDropdown(); // Populate the dropdown with user emails
+        loadDocuments(true); // Load documents with admin privileges
+      } else {
+        // Show sections for regular users
+        toggleVisibility(DOM.adminSection, true); // Allow document creation
+        toggleVisibility(DOM.roleManagementSection, false); // Hide role management
+        toggleVisibility(DOM.adminNav, false); // Hide admin navigation bar
+        loadDocuments(false); // Load documents with user privileges
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching user role:", error);
+    });
 }
 
 function handleUserLoggedOut() {
-  toggleVisibility(DOM.loginBtn, true);
-  toggleVisibility(DOM.logoutBtn, false);
-  toggleVisibility(DOM.loginSection, false);
-  toggleVisibility(DOM.adminSection, false);
-  loadDocuments(false);
+  toggleVisibility(DOM.loginBtn, true); // Show the login button
+  toggleVisibility(DOM.logoutBtn, false); // Hide the logout button
+  toggleVisibility(DOM.registerBtn, true); // Show the register button
+  toggleVisibility(DOM.loginSection, false); // Hide the login section
+  toggleVisibility(DOM.adminSection, false); // Hide the admin section
+  toggleVisibility(DOM.roleManagementSection, false); // Hide the role management section
+  toggleVisibility(DOM.adminNav, false); // Hide the admin navigation bar
+  DOM.welcomeMessage.textContent = ""; // Clear the welcome message
+  loadDocuments(false); // Load documents for non-logged-in users
 }
 
 // Utility Functions
 function toggleVisibility(element, isVisible) {
+  if (!element) return; // Skip if the element is undefined
   element.style.display = isVisible ? "block" : "none";
 }
 
@@ -91,9 +126,14 @@ function isValidEmail(email) {
 }
 
 // Login
-DOM.loginBtn.addEventListener("click", () =>
-  toggleVisibility(DOM.loginSection, true)
-);
+DOM.loginBtn.addEventListener("click", () => {
+  toggleVisibility(DOM.loginSection, true); // Show the login section
+  toggleVisibility(DOM.registrationSection, false); // Hide the registration section
+  toggleVisibility(DOM.adminSection, false); // Hide the admin section
+  toggleVisibility(DOM.roleManagementSection, false); // Hide the role management section
+  toggleVisibility(DOM.adminNav, false); // Hide the admin navigation bar
+});
+
 DOM.loginForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const email = e.target.email.value.trim();
@@ -105,19 +145,92 @@ DOM.loginForm.addEventListener("submit", (e) => {
     return displayError(DOM.loginError, "Please enter a valid email address.");
 
   signInWithEmailAndPassword(auth, email, password)
-    .then(() => console.log("Login successful"))
-    .catch((error) =>
-      displayError(DOM.loginError, `Login failed: ${error.message}`)
-    );
+    .then((userCredential) => {
+      const user = userCredential.user;
+      return getDoc(doc(db, "users", user.uid));
+    })
+    .then((userDoc) => {
+      const userData = userDoc.data();
+      if (userData.role === "admin") {
+        // Show admin-specific sections
+        toggleVisibility(DOM.adminSection, true);
+        toggleVisibility(DOM.roleManagementSection, true);
+        toggleVisibility(DOM.adminNav, true); // Show admin navigation bar
+        populateUserDropdown(); // Populate the dropdown with user emails
+        loadDocuments(true); // Load documents with admin privileges
+      } else {
+        // Show sections for regular users
+        toggleVisibility(DOM.adminSection, true); // Allow document creation
+        toggleVisibility(DOM.roleManagementSection, false); // Hide role management
+        toggleVisibility(DOM.adminNav, false); // Hide admin navigation bar
+        loadDocuments(false); // Load documents with user privileges
+      }
+    })
+    .catch((error) => {
+      displayError(DOM.loginError, `Login failed: ${error.message}`);
+    });
 });
 
 // Logout
 DOM.logoutBtn.addEventListener("click", () => {
   if (confirm("Are you sure you want to log out?")) {
     signOut(auth)
-      .then(() => console.log("Logged out successfully"))
-      .catch((error) => alert("Logout failed: " + error.message));
+      .then(() => {
+        console.log("Logged out successfully");
+        handleUserLoggedOut(); // Reset the UI after logout
+        alert("You have been logged out.");
+      })
+      .catch((error) => {
+        console.error("Logout failed:", error.message);
+        alert("Logout failed: " + error.message);
+      });
   }
+});
+
+// Add Registration Functionality
+DOM.registrationForm = document.getElementById("registration-form");
+DOM.registrationSection = document.getElementById("registration-section");
+DOM.welcomeMessage = document.getElementById("welcome-message");
+
+// Show Registration Section
+function showRegistration() {
+  toggleVisibility(DOM.registrationSection, true);
+  toggleVisibility(DOM.loginSection, false);
+}
+
+// Handle Registration
+DOM.registrationForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const username = e.target["reg-username"].value.trim();
+  const email = e.target["reg-email"].value.trim();
+  const password = e.target["reg-password"].value.trim();
+
+  if (!username || !email || !password) {
+    displayError(DOM.registrationError, "Please fill in all fields.");
+    return;
+  }
+
+  createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      const user = userCredential.user;
+      return updateProfile(user, { displayName: username });
+    })
+    .then(() => {
+      alert("Registration successful! Please log in.");
+      toggleVisibility(DOM.registrationSection, false);
+      toggleVisibility(DOM.loginSection, true);
+    })
+    .catch((error) => {
+      displayError(DOM.registrationError, `Registration failed: ${error.message}`);
+    });
+});
+
+// Show Registration Section
+DOM.registerBtn = document.getElementById("register-btn");
+
+DOM.registerBtn.addEventListener("click", () => {
+  toggleVisibility(DOM.registrationSection, true); // Show the registration section
+  toggleVisibility(DOM.loginSection, false); // Hide the login section
 });
 
 // Form Handling
@@ -163,8 +276,8 @@ DOM.cancelEditBtn.addEventListener("click", resetForm);
 
 // Document Management
 function loadDocuments(isAdmin) {
-  DOM.documentList.innerHTML = "";
-  const searchTerm = DOM.searchInput.value.trim().toLowerCase();
+  DOM.documentList.innerHTML = ""; // Clear the document list
+  const searchTerm = DOM.searchInput?.value?.trim().toLowerCase() || ""; // Handle search input
   const q = query(collection(db, "documents"), orderBy("timestamp", "desc"));
 
   getDocs(q)
@@ -204,42 +317,22 @@ function createButtonContainer(id, data, isAdmin) {
   const downloadButton = createButton("Download", () => downloadDoc(data));
   container.appendChild(downloadButton);
 
-  if (isAdmin) {
-    const editButton = createButton("Edit", () => editDoc(id, data));
-    const deleteButton = createButton("Delete", () => removeDoc(id));
-    container.appendChild(editButton);
-    container.appendChild(deleteButton);
-  }
+  // Check user role for edit/delete permissions
+  getDoc(doc(db, "users", auth.currentUser.uid)).then((userDoc) => {
+    const userRole = userDoc.data().role;
 
-  return container;
-}
+    if (userRole === "admin" || userRole === "editor") {
+      const editButton = createButton("Edit", () => editDoc(id, data));
+      container.appendChild(editButton);
+    }
 
-function createButton(text, onClick) {
-  const button = document.createElement("button");
-  button.textContent = text;
-  button.onclick = onClick;
-  return button;
-}
-
-function editDoc(id, data) {
-  DOM.formTitle.textContent = "Edit Letter/Agenda";
-  DOM.editId.value = id;
-
-  Object.keys(data).forEach((key) => {
-    const input = document.getElementById(key);
-    if (input) input.value = data[key];
+    if (userRole === "admin") {
+      const deleteButton = createButton("Delete", () => removeDoc(id));
+      container.appendChild(deleteButton);
+    }
   });
 
-  toggleVisibility(DOM.cancelEditBtn, true);
-  DOM.adminSection.scrollIntoView({ behavior: "smooth" });
-}
-
-function removeDoc(id) {
-  if (confirm("Are you sure you want to delete this document?")) {
-    deleteDoc(doc(db, "documents", id))
-      .then(() => loadDocuments(true))
-      .catch((error) => alert(error.message));
-  }
+  return container;
 }
 
 // Download Document
@@ -458,3 +551,132 @@ function generateDOCX(data) {
     saveAs(blob, `${data.title}.docx`)
   );
 }
+
+// Role Management
+DOM.roleForm = document.getElementById("role-form");
+DOM.roleManagementSection = document.getElementById("role-management-section");
+
+function showRoleManagement() {
+  toggleVisibility(DOM.roleManagementSection, true);
+}
+
+DOM.roleForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const userId = e.target["user-email"].value; // Get the selected user ID
+  const role = e.target["user-role"].value;
+
+  if (!userId || !role) {
+    displayError(DOM.roleError, "Please select a user and a role.");
+    return;
+  }
+
+  updateDoc(doc(db, "users", userId), { role })
+    .then(() => {
+      alert("Role assigned successfully!");
+      DOM.roleForm.reset();
+    })
+    .catch((error) => {
+      displayError(DOM.roleError, `Failed to assign role: ${error.message}`);
+    });
+});
+
+function populateUserDropdown() {
+  const userEmailDropdown = document.getElementById("user-email");
+  userEmailDropdown.innerHTML = '<option value="" disabled selected>Select a user</option>'; // Reset dropdown
+
+  const usersRef = collection(db, "users");
+  getDocs(usersRef)
+    .then((querySnapshot) => {
+      querySnapshot.forEach((docSnap) => {
+        const userData = docSnap.data();
+        const option = document.createElement("option");
+        option.value = docSnap.id; // Use the document ID as the value
+        option.textContent = userData.email; // Display the email
+        userEmailDropdown.appendChild(option);
+      });
+    })
+    .catch((error) => {
+      console.error("Error fetching users:", error);
+    });
+}
+
+// Hamburger Menu Toggle
+const hamburgerMenu = document.getElementById("hamburger-menu");
+const navLinks = document.getElementById("nav-links");
+
+hamburgerMenu.addEventListener("click", () => {
+  navLinks.classList.toggle("active");
+});
+
+// Function to show only one session at a time
+function showSession(sessionId) {
+  // Hide all sections
+  const sections = [
+    DOM.adminSection,
+    DOM.roleManagementSection,
+    DOM.registrationSection,
+    DOM.loginSection,
+    DOM.guestSection,
+  ];
+  sections.forEach((section) => toggleVisibility(section, false));
+
+  // Show the selected section
+  const session = document.getElementById(sessionId);
+  toggleVisibility(session, true);
+}
+
+// Set default session to "Create Letter/Agenda"
+document.addEventListener("DOMContentLoaded", () => {
+  showSession("admin-section"); // Default session
+});
+
+// Set default session to "View Documents"
+document.addEventListener("DOMContentLoaded", () => {
+  showSession("guest-section"); // Default session
+  loadDocuments(false); // Load documents for non-logged-in users
+});
+
+// Add event listeners for navigation links
+document.querySelectorAll("#nav-links a").forEach((link) => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+    const targetId = e.target.getAttribute("href").substring(1); // Get the target section ID
+    showSession(targetId);
+  });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Add event listeners here
+  DOM.loginBtn.addEventListener("click", () => {
+    toggleVisibility(DOM.loginSection, true); // Show the login section
+    toggleVisibility(DOM.registrationSection, false); // Hide the registration section
+  });
+
+  DOM.logoutBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to log out?")) {
+      signOut(auth)
+        .then(() => {
+          console.log("Logged out successfully");
+          handleUserLoggedOut(); // Reset the UI after logout
+        })
+        .catch((error) => alert("Logout failed: " + error.message));
+    }
+  });
+
+  DOM.registerBtn.addEventListener("click", () => {
+    toggleVisibility(DOM.registrationSection, true);
+    toggleVisibility(DOM.loginSection, false);
+  });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  DOM.registerBtn.addEventListener("click", () => {
+    toggleVisibility(DOM.registrationSection, true); // Show the registration section
+    toggleVisibility(DOM.loginSection, false); // Hide the login section
+  });
+});
+
+console.log("Login Button:", DOM.loginBtn);
+console.log("Logout Button:", DOM.logoutBtn);
+console.log("Register Button:", DOM.registerBtn);
+console.log("Registration Section:", DOM.registrationSection);
