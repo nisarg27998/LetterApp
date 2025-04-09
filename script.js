@@ -10,38 +10,40 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // DOM Elements
-const loginBtn = document.getElementById('login-btn');
-const logoutBtn = document.getElementById('logout-btn');
-const loginSection = document.getElementById('login-section');
-const loginForm = document.getElementById('login-form');
-const loginError = document.getElementById('login-error');
-const adminSection = document.getElementById('admin-section');
-const letterForm = document.getElementById('letter-form');
-const formTitle = document.getElementById('form-title');
-const editId = document.getElementById('edit-id');
-const cancelEditBtn = document.getElementById('cancel-edit');
-const documentList = document.getElementById('document-list');
-const searchInput = document.getElementById('search-input');
+const DOM = {
+    loginBtn: document.getElementById('login-btn'),
+    logoutBtn: document.getElementById('logout-btn'),
+    loginSection: document.getElementById('login-section'),
+    loginForm: document.getElementById('login-form'),
+    loginError: document.getElementById('login-error'),
+    adminSection: document.getElementById('admin-section'),
+    letterForm: document.getElementById('letter-form'),
+    formTitle: document.getElementById('form-title'),
+    editId: document.getElementById('edit-id'),
+    cancelEditBtn: document.getElementById('cancel-edit'),
+    documentList: document.getElementById('document-list'),
+    searchInput: document.getElementById('search-input'),
+    typeModal: document.getElementById('type-modal'),
+    formatModal: document.getElementById('format-modal'),
+    pdfBtn: document.getElementById('pdf-btn'),
+    docxBtn: document.getElementById('docx-btn'),
+    letterBtn: document.getElementById('letter-btn'),
+    agendaBtn: document.getElementById('agenda-btn'),
+};
 
-// Admin Email
+// Constants
 const ADMIN_EMAIL = "admin@example.com";
 
 // Authentication State Listener
-onAuthStateChanged(auth, user => {
-    if (user) {
-        handleUserLoggedIn(user);
-    } else {
-        handleUserLoggedOut();
-    }
-});
+onAuthStateChanged(auth, user => user ? handleUserLoggedIn(user) : handleUserLoggedOut());
 
 function handleUserLoggedIn(user) {
-    loginBtn.style.display = 'none';
-    logoutBtn.style.display = 'block';
-    loginSection.style.display = 'none';
+    toggleVisibility(DOM.loginBtn, false);
+    toggleVisibility(DOM.logoutBtn, true);
+    toggleVisibility(DOM.loginSection, false);
 
     if (user.email === ADMIN_EMAIL) {
-        adminSection.style.display = 'block';
+        toggleVisibility(DOM.adminSection, true);
         loadDocuments(true);
     } else {
         loadDocuments(false);
@@ -49,135 +51,92 @@ function handleUserLoggedIn(user) {
 }
 
 function handleUserLoggedOut() {
-    loginBtn.style.display = 'block';
-    logoutBtn.style.display = 'none';
-    loginSection.style.display = 'none';
-    adminSection.style.display = 'none';
+    toggleVisibility(DOM.loginBtn, true);
+    toggleVisibility(DOM.logoutBtn, false);
+    toggleVisibility(DOM.loginSection, false);
+    toggleVisibility(DOM.adminSection, false);
     loadDocuments(false);
 }
 
-// Show Login Form
-loginBtn.addEventListener('click', () => {
-    loginSection.style.display = 'block';
-    loginBtn.style.display = 'none';
-});
+// Utility Functions
+function toggleVisibility(element, isVisible) {
+    element.style.display = isVisible ? 'block' : 'none';
+}
 
-// Login Form Submission
-loginForm.addEventListener('submit', e => {
-    e.preventDefault();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-
-    loginError.style.display = 'none';
-
-    if (!email || !password) {
-        displayLoginError("Please fill in all fields.");
-        return;
-    }
-
-    if (!isValidEmail(email)) {
-        displayLoginError("Please enter a valid email address.");
-        return;
-    }
-
-    signInWithEmailAndPassword(auth, email, password)
-        .then(() => console.log("Login successful"))
-        .catch(error => displayLoginError(`Login failed: ${error.message}`));
-});
-
-function displayLoginError(message) {
-    loginError.textContent = message;
-    loginError.style.display = 'block';
+function displayError(element, message) {
+    element.textContent = message;
+    element.style.display = 'block';
 }
 
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+// Login
+DOM.loginBtn.addEventListener('click', () => toggleVisibility(DOM.loginSection, true));
+DOM.loginForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const email = e.target.email.value.trim();
+    const password = e.target.password.value.trim();
+
+    if (!email || !password) return displayError(DOM.loginError, "Please fill in all fields.");
+    if (!isValidEmail(email)) return displayError(DOM.loginError, "Please enter a valid email address.");
+
+    signInWithEmailAndPassword(auth, email, password)
+        .then(() => console.log("Login successful"))
+        .catch(error => displayError(DOM.loginError, `Login failed: ${error.message}`));
+});
+
 // Logout
-logoutBtn.addEventListener('click', () => {
+DOM.logoutBtn.addEventListener('click', () => {
     if (confirm("Are you sure you want to log out?")) {
-        signOut(auth)
-            .then(() => console.log("Logged out successfully"))
+        signOut(auth).then(() => console.log("Logged out successfully"))
             .catch(error => alert("Logout failed: " + error.message));
     }
 });
 
-// Add or Edit Document
-letterForm.addEventListener('submit', e => {
+// Form Handling
+DOM.letterForm.addEventListener('submit', e => {
     e.preventDefault();
-    const documentData = getFormData();
+    const formData = getFormData();
+    if (!isFormDataValid(formData)) return alert("Please fill the details");
 
-    if (!isFormDataValid(documentData)) {
-        alert("Please fill in all fields.");
-        return;
-    }
-
-    const id = editId.value;
-
-    if (id) {
-        updateDocument(id, documentData);
-    } else {
-        addDocument(documentData);
-    }
+    const id = DOM.editId.value;
+    id ? updateDocument(id, formData) : addDocument(formData);
 });
 
 function getFormData() {
     return {
-        senderName: document.getElementById('sender-name')?.value.trim(),
-        senderAddress: document.getElementById('sender-address')?.value.trim(),
-        recipientName: document.getElementById('recipient-name')?.value.trim(),
-        recipientAddress: document.getElementById('recipient-address')?.value.trim(),
-        salutation: document.getElementById('salutation')?.value.trim(),
-        title: document.getElementById('title')?.value.trim(),
-        content: document.getElementById('content')?.value.trim(),
-        specificRequest: document.getElementById('specific-request')?.value.trim(),
-        closing: document.getElementById('closing')?.value.trim(),
-        timestamp: serverTimestamp()
+        senderName: document.getElementById('sender-name')?.value?.trim() || "",
+        recipientName: document.getElementById('recipient-name')?.value?.trim() || "",
+        salutation: document.getElementById('salutation')?.value?.trim() || "",
+        title: document.getElementById('title')?.value?.trim() || "",
+        content: document.getElementById('content')?.value?.trim() || "",
+        specificRequest: document.getElementById('specific-request')?.value?.trim() || "",
+        closing: document.getElementById('closing')?.value?.trim() || "",
+        timestamp: serverTimestamp(),
     };
 }
 
 function isFormDataValid(data) {
-    return Object.values(data).every(value => value && value.trim() !== '');
+    return Object.entries(data).every(([key, value]) =>
+        key === 'timestamp' || (typeof value === 'string' && value.trim() !== '')
+    );
 }
-
-function updateDocument(id, data) {
-    updateDoc(doc(db, 'documents', id), data)
-        .then(() => {
-            resetForm();
-            loadDocuments(true);
-        })
-        .catch(error => alert(error.message));
-}
-
-function addDocument(data) {
-    addDoc(collection(db, 'documents'), data)
-        .then(() => {
-            resetForm();
-            loadDocuments(true);
-        })
-        .catch(error => alert(error.message));
-}
-
-// Cancel Edit
-cancelEditBtn.addEventListener('click', resetForm);
 
 function resetForm() {
-    formTitle.textContent = "Create Letter/Agenda";
-    editId.value = '';
-    letterForm.reset();
-    cancelEditBtn.style.display = 'none';
+    DOM.formTitle.textContent = "Create Letter/Agenda";
+    DOM.editId.value = '';
+    DOM.letterForm.reset();
+    toggleVisibility(DOM.cancelEditBtn, false);
 }
 
-// Search Documents
-searchInput.addEventListener('input', () => {
-    loadDocuments(auth.currentUser && auth.currentUser.email === ADMIN_EMAIL);
-});
+DOM.cancelEditBtn.addEventListener('click', resetForm);
 
-// Load Documents
+// Document Management
 function loadDocuments(isAdmin) {
-    documentList.innerHTML = '';
-    const searchTerm = searchInput.value.trim().toLowerCase();
+    DOM.documentList.innerHTML = '';
+    const searchTerm = DOM.searchInput.value.trim().toLowerCase();
     const q = query(collection(db, 'documents'), orderBy('timestamp', 'desc'));
 
     getDocs(q).then(querySnapshot => {
@@ -204,7 +163,7 @@ function createDocumentListItem(id, data, isAdmin) {
 
     li.appendChild(titleSpan);
     li.appendChild(buttonContainer);
-    documentList.appendChild(li);
+    DOM.documentList.appendChild(li);
 }
 
 function createButtonContainer(id, data, isAdmin) {
@@ -232,21 +191,19 @@ function createButton(text, onClick) {
     return button;
 }
 
-// Edit Document
 function editDoc(id, data) {
-    formTitle.textContent = "Edit Letter/Agenda";
-    editId.value = id;
+    DOM.formTitle.textContent = "Edit Letter/Agenda";
+    DOM.editId.value = id;
 
     Object.keys(data).forEach(key => {
         const input = document.getElementById(key);
         if (input) input.value = data[key];
     });
 
-    cancelEditBtn.style.display = 'inline-block';
-    adminSection.scrollIntoView({ behavior: 'smooth' });
+    toggleVisibility(DOM.cancelEditBtn, true);
+    DOM.adminSection.scrollIntoView({ behavior: 'smooth' });
 }
 
-// Delete Document
 function removeDoc(id) {
     if (confirm("Are you sure you want to delete this document?")) {
         deleteDoc(doc(db, 'documents', id))
@@ -258,48 +215,41 @@ function removeDoc(id) {
 // Download Document
 function downloadDoc(data) {
     const isLoggedIn = auth.currentUser && auth.currentUser.email === ADMIN_EMAIL;
-
-    if (isLoggedIn) {
-        showTypeModal(data);
-    } else {
-        generateAgenda(data);
-    }
+    isLoggedIn ? showTypeModal(data) : generateAgenda(data);
 }
 
 function showTypeModal(data) {
-    const typeModal = document.getElementById('type-modal');
-    typeModal.style.display = 'flex';
+    toggleVisibility(DOM.typeModal, true);
 
-    typeModal.addEventListener('click', event => {
-        if (event.target === typeModal) typeModal.style.display = 'none';
+    DOM.typeModal.addEventListener('click', event => {
+        if (event.target === DOM.typeModal) toggleVisibility(DOM.typeModal, false);
     });
 
-    document.getElementById('letter-btn').onclick = () => {
-        typeModal.style.display = 'none';
+    DOM.letterBtn.onclick = () => {
+        toggleVisibility(DOM.typeModal, false);
         showFormatModal(data, 'letter');
     };
 
-    document.getElementById('agenda-btn').onclick = () => {
-        typeModal.style.display = 'none';
+    DOM.agendaBtn.onclick = () => {
+        toggleVisibility(DOM.typeModal, false);
         generateAgenda(data);
     };
 }
 
 function showFormatModal(data, type) {
-    const formatModal = document.getElementById('format-modal');
-    formatModal.style.display = 'flex';
+    toggleVisibility(DOM.formatModal, true);
 
-    formatModal.addEventListener('click', event => {
-        if (event.target === formatModal) formatModal.style.display = 'none';
+    DOM.formatModal.addEventListener('click', event => {
+        if (event.target === DOM.formatModal) toggleVisibility(DOM.formatModal, false);
     });
 
-    document.getElementById('pdf-btn').onclick = () => {
-        formatModal.style.display = 'none';
+    DOM.pdfBtn.onclick = () => {
+        toggleVisibility(DOM.formatModal, false);
         if (type === 'letter') generatePDF(data);
     };
 
-    document.getElementById('docx-btn').onclick = () => {
-        formatModal.style.display = 'none';
+    DOM.docxBtn.onclick = () => {
+        toggleVisibility(DOM.formatModal, false);
         if (type === 'letter') generateDOCX(data);
     };
 }
@@ -336,112 +286,100 @@ function generateAgenda(data) {
 
 // Generate PDF
 function generatePDF(data) {
-    const pdfContent = `
-        ${data.senderAddress}
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-        ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+    doc.setFont("Times", "normal");
+    doc.setFontSize(12);
 
-        ${data.recipientName}
-        ${data.recipientAddress}
+    doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), 10, 10);
+    doc.text(data.recipientName, 10, 20);
+    doc.text(data.salutation, 10, 30);
+    doc.text(`Subject: ${data.title}`, 10, 40);
+    doc.text(data.content, 10, 50);
+    doc.text(`Specific Request: ${data.specificRequest}`, 10, 70);
+    doc.text(`Closing: ${data.closing}`, 10, 90);
+    doc.text(`Sincerely,`, 10, 110);
+    doc.text(data.senderName, 10, 120);
 
-        ${data.salutation}
-
-        Subject: ${data.title}
-
-        ${data.content}
-
-        Sincerely,
-        ${data.senderName}
-    `;
-
-    const pdfBlob = new Blob([pdfContent], { type: 'application/pdf' });
-    saveAs(pdfBlob, `${data.title}.pdf`);
+    doc.save(`${data.title}.pdf`);
 }
 
 // Generate DOCX
 function generateDOCX(data) {
     const doc = new window.docx.Document({
-        sections: [{
-            properties: {
-                page: {
-                    margin: {
-                        top: window.docx.convertInchesToTwip(1),
-                        bottom: window.docx.convertInchesToTwip(1),
-                        left: window.docx.convertInchesToTwip(1),
-                        right: window.docx.convertInchesToTwip(1)
-                    }
-                }
+        sections: [
+            {
+                properties: {
+                    page: {
+                        margin: {
+                            top: window.docx.convertInchesToTwip(1),
+                            bottom: window.docx.convertInchesToTwip(1),
+                            left: window.docx.convertInchesToTwip(1),
+                            right: window.docx.convertInchesToTwip(1),
+                        },
+                    },
+                },
+                children: [
+                    new window.docx.Paragraph({
+                        children: [
+                            new window.docx.TextRun({
+                                text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+                                font: "Times New Roman",
+                                size: 24,
+                            }),
+                        ],
+                        spacing: { after: 400 },
+                        alignment: window.docx.AlignmentType.LEFT,
+                    }),
+                    new window.docx.Paragraph({
+                        children: [new window.docx.TextRun({ text: data.salutation, font: "Times New Roman", size: 24 })],
+                        spacing: { after: 200 },
+                        alignment: window.docx.AlignmentType.LEFT,
+                    }),
+                    new window.docx.Paragraph({
+                        children: [
+                            new window.docx.TextRun({
+                                text: `Subject: ${data.title}`,
+                                bold: true,
+                                font: "Times New Roman",
+                                size: 24,
+                            }),
+                        ],
+                        spacing: { after: 200 },
+                        alignment: window.docx.AlignmentType.LEFT,
+                    }),
+                    new window.docx.Paragraph({
+                        children: data.content.split('\n').map(line =>
+                            new window.docx.TextRun({ text: line, font: "Times New Roman", size: 24 })
+                        ),
+                        spacing: { after: 400 },
+                        alignment: window.docx.AlignmentType.LEFT,
+                    }),
+                    new window.docx.Paragraph({
+                        children: [
+                            new window.docx.TextRun({
+                                text: `Specific Request: ${data.specificRequest}`,
+                                font: "Times New Roman",
+                                size: 24,
+                            }),
+                        ],
+                        spacing: { after: 400 },
+                        alignment: window.docx.AlignmentType.LEFT,
+                    }),
+                    new window.docx.Paragraph({
+                        children: [new window.docx.TextRun({ text: data.closing, font: "Times New Roman", size: 24 })],
+                        spacing: { after: 200 },
+                        alignment: window.docx.AlignmentType.LEFT,
+                    }),
+                    new window.docx.Paragraph({
+                        children: [new window.docx.TextRun({ text: data.senderName, font: "Times New Roman", size: 24 })],
+                        alignment: window.docx.AlignmentType.LEFT,
+                    }),
+                ],
             },
-            children: [
-                new window.docx.Paragraph({
-                    children: data.senderAddress.split('\n').map(line =>
-                        new window.docx.TextRun({ text: line, font: "Times New Roman", size: 24 })
-                    ),
-                    spacing: { after: 200 },
-                    alignment: window.docx.AlignmentType.LEFT
-                }),
-                new window.docx.Paragraph({
-                    children: [new window.docx.TextRun({
-                        text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-                        font: "Times New Roman",
-                        size: 24
-                    })],
-                    spacing: { after: 400 },
-                    alignment: window.docx.AlignmentType.LEFT
-                }),
-                new window.docx.Paragraph({
-                    children: [new window.docx.TextRun({ text: data.recipientName, font: "Times New Roman", size: 24 })],
-                    spacing: { after: 200 },
-                    alignment: window.docx.AlignmentType.LEFT
-                }),
-                new window.docx.Paragraph({
-                    children: data.recipientAddress.split('\n').map(line =>
-                        new window.docx.TextRun({ text: line, font: "Times New Roman", size: 24 })
-                    ),
-                    spacing: { after: 400 },
-                    alignment: window.docx.AlignmentType.LEFT
-                }),
-                new window.docx.Paragraph({
-                    children: [new window.docx.TextRun({ text: data.salutation, font: "Times New Roman", size: 24 })],
-                    spacing: { after: 200 },
-                    alignment: window.docx.AlignmentType.LEFT
-                }),
-                new window.docx.Paragraph({
-                    children: [new window.docx.TextRun({
-                        text: `Subject: ${data.title}`,
-                        bold: true,
-                        font: "Times New Roman",
-                        size: 24
-                    })],
-                    spacing: { after: 200 },
-                    alignment: window.docx.AlignmentType.LEFT
-                }),
-                new window.docx.Paragraph({
-                    children: data.content.split('\n').map(line =>
-                        new window.docx.TextRun({ text: line, font: "Times New Roman", size: 24 })
-                    ),
-                    spacing: { after: 400 },
-                    alignment: window.docx.AlignmentType.LEFT
-                }),
-                new window.docx.Paragraph({
-                    children: [new window.docx.TextRun({ text: "Sincerely,", font: "Times New Roman", size: 24 })],
-                    spacing: { after: 200 },
-                    alignment: window.docx.AlignmentType.LEFT
-                }),
-                new window.docx.Paragraph({
-                    children: [new window.docx.TextRun({ text: data.senderName, font: "Times New Roman", size: 24 })],
-                    alignment: window.docx.AlignmentType.LEFT
-                })
-            ]
-        }]
+        ],
     });
 
-    window.docx.Packer.toBlob(doc).then(blob => {
-        saveAs(blob, `${data.title}.docx`);
-    });
+    window.docx.Packer.toBlob(doc).then(blob => saveAs(blob, `${data.title}.docx`));
 }
-
-// Expose functions to global scope
-window.downloadDoc = downloadDoc;
-window.removeDoc = removeDoc;
-window.editDoc = editDoc;

@@ -16,57 +16,56 @@
         </div>
     </header>
 
-    <!-- Login Section -->
-    <section id="login-section" style="display: none;">
-        <h2>Admin Login</h2>
-        <form id="login-form">
-            <label for="email">Email:</label>
-            <input type="email" id="email" required>
-            <label for="password">Password:</label>
-            <input type="password" id="password" required>
-            <button type="submit">Login</button>
-            <p id="login-error" style="color: red; display: none;"></p>
-        </form>
-    </section>
+    <!-- Main Content -->
+    <main>
+        <!-- Login Section -->
+        <section id="login-section" style="display: none;">
+            <h2>Admin Login</h2>
+            <form id="login-form">
+                <label for="email">Email:</label>
+                <input type="email" id="email" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" required>
+                <button type="submit">Login</button>
+                <p id="login-error" style="color: red; display: none;"></p>
+            </form>
+        </section>
 
-    <!-- Admin Section -->
-    <section id="admin-section" style="display: none;">
-        <h2 id="form-title">Create Letter/Agenda</h2>
-        <form id="letter-form">
-            <input type="hidden" id="edit-id">
-            <label for="sender-name">Sender Name:</label>
-            <input type="text" id="sender-name" required>
-            <label for="sender-address">Sender Address:</label>
-            <textarea id="sender-address" rows="3" required></textarea>
-            <label for="recipient-name">Recipient Name:</label>
-            <input type="text" id="recipient-name" required>
-            <label for="recipient-address">Recipient Address:</label>
-            <textarea id="recipient-address" rows="3" required></textarea>
-            <label for="salutation">Salutation (e.g., Dear...):</label>
-            <input type="text" id="salutation" required>
-            <label for="title">Subject/Title:</label>
-            <input type="text" id="title" required>
-            <label for="content">Body:</label>
-            <textarea id="content" required></textarea>
-            <label for="specific-request">Specific Request:</label>
-            <textarea id="specific-request" rows="3" required></textarea>
-            <label for="closing">Closing:</label>
-            <textarea id="closing" rows="2" required></textarea>
-            <button type="submit">Save</button>
-            <button type="button" id="cancel-edit" style="display: none;">Cancel</button>
-        </form>
-    </section>
+        <!-- Admin Section -->
+        <section id="admin-section" style="display: none;">
+            <h2 id="form-title">Create Letter/Agenda</h2>
+            <form id="letter-form">
+                <input type="hidden" id="edit-id">
+                <label for="sender-name">Sender Name:</label>
+                <input type="text" id="sender-name" required>
+                <label for="recipient-name">Recipient Name:</label>
+                <input type="text" id="recipient-name" required>
+                <label for="salutation">Salutation (e.g., Dear...):</label>
+                <input type="text" id="salutation" required>
+                <label for="title">Subject/Title:</label>
+                <input type="text" id="title" required>
+                <label for="content">Body:</label>
+                <textarea id="content" required></textarea>
+                <label for="specific-request">Specific Request:</label>
+                <textarea id="specific-request" rows="3" required></textarea>
+                <label for="closing">Closing:</label>
+                <textarea id="closing" rows="2" required></textarea>
+                <button type="submit">Save</button>
+                <button type="button" id="cancel-edit" style="display: none;">Cancel</button>
+            </form>
+        </section>
 
-    <!-- Guest Section -->
-    <section id="guest-section">
-        <h2>Available Documents</h2>
-        <div id="search-bar">
-            <input type="text" id="search-input" placeholder="Search by title...">
-        </div>
-        <ul id="document-list"></ul>
-    </section>
+        <!-- Guest Section -->
+        <section id="guest-section">
+            <h2>Available Documents</h2>
+            <div id="search-bar">
+                <input type="text" id="search-input" placeholder="Search by title...">
+            </div>
+            <ul id="document-list"></ul>
+        </section>
+    </main>
 
-    <!-- Format Modal -->
+    <!-- Modals -->
     <div id="format-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <h3>Choose Download Format</h3>
@@ -75,7 +74,6 @@
         </div>
     </div>
 
-    <!-- Type Modal -->
     <div id="type-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <h3>Choose Document Type</h3>
@@ -84,10 +82,16 @@
         </div>
     </div>
 
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Letter & Agenda Writer. All rights reserved.</p>
+    </footer>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
     <script type="module" src="script.js"></script>
 </body>
 </html>
