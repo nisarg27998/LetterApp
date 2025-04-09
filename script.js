@@ -1,35 +1,12 @@
-// Firebase Imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  updateProfile,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  addDoc,
-  deleteDoc,
-  doc,
-  updateDoc,
-  getDoc,
-  setDoc,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, collection, getDocs, orderBy, query, serverTimestamp, addDoc, deleteDoc, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// DOM Elements
 const DOM = {
   loginBtn: document.getElementById("login-btn"),
   logoutBtn: document.getElementById("logout-btn"),
@@ -58,68 +35,49 @@ const DOM = {
   roleManagementSection: document.getElementById("role-management-section"),
 };
 
-// Constants
-const ADMIN_EMAIL = "admin@example.com";
-
-// Authentication State Listener
-onAuthStateChanged(auth, (user) =>
-  user ? handleUserLoggedIn(user) : handleUserLoggedOut()
-);
+// Authentication State
+onAuthStateChanged(auth, (user) => user ? handleUserLoggedIn(user) : handleUserLoggedOut());
 
 function handleUserLoggedIn(user) {
-  toggleVisibility(DOM.loginBtn, false); // Hide the login button
-  toggleVisibility(DOM.logoutBtn, true); // Show the logout button
-  toggleVisibility(DOM.registerBtn, false); // Hide the register button
-  toggleVisibility(DOM.loginSection, false); // Hide the login section
+  toggleVisibility(DOM.loginBtn, false);
+  toggleVisibility(DOM.logoutBtn, true);
+  toggleVisibility(DOM.registerBtn, false);
+  toggleVisibility(DOM.loginSection, false);
 
-  // Check if the user is an admin
-  getDoc(doc(db, "users", user.uid))
-    .then((userDoc) => {
-      const userData = userDoc.data();
-      if (userData.role === "admin") {
-        // Display "Hi, Admin" in the header
-        DOM.welcomeMessage.textContent = "Hi, Admin";
-
-        // Show admin-specific sections
-        toggleVisibility(DOM.adminSection, true); // Show Create Letter/Agenda
-        toggleVisibility(DOM.roleManagementSection, true); // Show Manage Roles
-        toggleVisibility(DOM.adminNav, true); // Show admin navigation bar
-        toggleVisibility(DOM.guestSection, false); // Hide Available Documents
-        populateUserDropdown(); // Populate the dropdown with user emails
-        loadDocuments(true); // Load documents with admin privileges
-      } else {
-        // Display the user's display name in the header
-        DOM.welcomeMessage.textContent = `Hi, ${user.displayName || "User"}`;
-
-        // Show sections for regular users
-        toggleVisibility(DOM.adminSection, false); // Hide Create Letter/Agenda
-        toggleVisibility(DOM.roleManagementSection, false); // Hide Manage Roles
-        toggleVisibility(DOM.adminNav, false); // Hide admin navigation bar
-        toggleVisibility(DOM.guestSection, true); // Show Available Documents
-        loadDocuments(false); // Load documents with user privileges
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching user role:", error);
-    });
+  getDoc(doc(db, "users", user.uid)).then((userDoc) => {
+    const userData = userDoc.data() || { role: "viewer" };
+    DOM.welcomeMessage.textContent = `Hi, ${userData.role === "admin" ? "Admin" : user.displayName || "User"}`;
+    const isAdmin = userData.role === "admin";
+    toggleVisibility(DOM.adminSection, true);
+    toggleVisibility(DOM.roleManagementSection, isAdmin);
+    toggleVisibility(DOM.adminNav, isAdmin);
+    toggleVisibility(DOM.guestSection, !isAdmin);
+    if (isAdmin) {
+      populateUserDropdown();
+      showSession("admin-section");
+    } else {
+      showSession("guest-section");
+    }
+    loadDocuments(isAdmin);
+  }).catch((error) => alert("Failed to load user data: " + error.message));
 }
 
 function handleUserLoggedOut() {
-  toggleVisibility(DOM.loginBtn, true); // Show the login button
-  toggleVisibility(DOM.logoutBtn, false); // Hide the logout button
-  toggleVisibility(DOM.registerBtn, true); // Show the register button
-  toggleVisibility(DOM.loginSection, false); // Hide the login section
-  toggleVisibility(DOM.adminSection, false); // Hide the admin section
-  toggleVisibility(DOM.roleManagementSection, false); // Hide the role management section
-  toggleVisibility(DOM.adminNav, false); // Hide the admin navigation bar
-  DOM.welcomeMessage.textContent = ""; // Clear the welcome message
-  loadDocuments(false); // Load documents for non-logged-in users
+  toggleVisibility(DOM.loginBtn, true);
+  toggleVisibility(DOM.logoutBtn, false);
+  toggleVisibility(DOM.registerBtn, true);
+  toggleVisibility(DOM.loginSection, false);
+  toggleVisibility(DOM.adminSection, false);
+  toggleVisibility(DOM.roleManagementSection, false);
+  toggleVisibility(DOM.adminNav, false);
+  DOM.welcomeMessage.textContent = "";
+  showSession("guest-section");
+  loadDocuments(false);
 }
 
 // Utility Functions
 function toggleVisibility(element, isVisible) {
-  if (!element) return; // Skip if the element is undefined
-  element.style.display = isVisible ? "block" : "none";
+  if (element) element.style.display = isVisible ? "block" : "none";
 }
 
 function displayError(element, message) {
@@ -127,159 +85,252 @@ function displayError(element, message) {
   element.style.display = "block";
 }
 
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+function showSession(sessionId) {
+  const sections = [DOM.adminSection, DOM.roleManagementSection, DOM.registrationSection, DOM.loginSection, DOM.guestSection];
+  sections.forEach((section) => toggleVisibility(section, false));
+  toggleVisibility(document.getElementById(sessionId), true);
 }
 
-// Login
-DOM.loginBtn.addEventListener("click", () => {
-  toggleVisibility(DOM.loginSection, true); // Show the login section
-  toggleVisibility(DOM.registrationSection, false); // Hide the registration section
-  toggleVisibility(DOM.adminSection, false); // Hide the admin section
-  toggleVisibility(DOM.roleManagementSection, false); // Hide the role management section
-  toggleVisibility(DOM.adminNav, false); // Hide the admin navigation bar
-});
+// Event Listeners
+document.addEventListener("DOMContentLoaded", () => {
+  showSession("guest-section");
+  loadDocuments(false);
+  initializeDocumentsCollection();
 
-DOM.loginForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const email = e.target.email.value.trim();
-  const password = e.target.password.value.trim();
+  DOM.typeModal.addEventListener("click", (e) => {
+    if (e.target === DOM.typeModal) toggleVisibility(DOM.typeModal, false);
+  });
+  DOM.formatModal.addEventListener("click", (e) => {
+    if (e.target === DOM.formatModal) toggleVisibility(DOM.formatModal, false);
+  });
 
-  if (!email || !password)
-    return displayError(DOM.loginError, "Please fill in all fields.");
-  if (!isValidEmail(email))
-    return displayError(DOM.loginError, "Please enter a valid email address.");
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      toggleVisibility(DOM.typeModal, false);
+      toggleVisibility(DOM.formatModal, false);
+    }
+  });
 
-  signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      return getDoc(doc(db, "users", user.uid));
-    })
-    .then((userDoc) => {
-      const userData = userDoc.data();
-      if (userData.role === "admin") {
-        // Show admin-specific sections
-        toggleVisibility(DOM.adminSection, true);
-        toggleVisibility(DOM.roleManagementSection, true);
-        toggleVisibility(DOM.adminNav, true); // Show admin navigation bar
-        populateUserDropdown(); // Populate the dropdown with user emails
-        loadDocuments(true); // Load documents with admin privileges
-      } else {
-        // Show sections for regular users
-        toggleVisibility(DOM.adminSection, true); // Allow document creation
-        toggleVisibility(DOM.roleManagementSection, false); // Hide role management
-        toggleVisibility(DOM.adminNav, false); // Hide admin navigation bar
-        loadDocuments(false); // Load documents with user privileges
-      }
-    })
-    .catch((error) => {
-      displayError(DOM.loginError, `Login failed: ${error.message}`);
-    });
-});
+  DOM.loginForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const email = e.target.email.value.trim();
+    const password = e.target.password.value.trim();
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => toggleVisibility(DOM.loginSection, false))
+      .catch((error) => displayError(DOM.loginError, "Login failed: " + error.message));
+  });
 
-// Logout
-DOM.logoutBtn.addEventListener("click", () => {
-  if (confirm("Are you sure you want to log out?")) {
-    signOut(auth)
-      .then(() => {
-        console.log("Logged out successfully");
-        handleUserLoggedOut(); // Reset the UI after logout
-        alert("You have been logged out.");
+  DOM.registrationForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const username = e.target["reg-username"].value.trim();
+    const email = e.target["reg-email"].value.trim();
+    const password = e.target["reg-password"].value.trim();
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        return Promise.all([
+          updateProfile(user, { displayName: username }),
+          setDoc(doc(db, "users", user.uid), { email, role: "viewer" }),
+        ]);
       })
-      .catch((error) => {
-        console.error("Logout failed:", error.message);
-        alert("Logout failed: " + error.message);
-      });
-  }
+      .then(() => {
+        alert("Registration successful! Please log in.");
+        showSession("login-section");
+      })
+      .catch((error) => displayError(DOM.registrationError, "Registration failed: " + error.message));
+  });
+
+  DOM.letterForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const formData = getFormData();
+    if (!isFormDataValid(formData)) return alert("Please fill in all fields.");
+    const id = DOM.editId.value;
+    id ? updateDocument(id, formData) : addDocument(formData);
+  });
+
+  DOM.cancelEditBtn.addEventListener("click", resetForm);
+
+  DOM.roleForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const userId = e.target["user-email"].value;
+    const role = e.target["user-role"].value;
+    updateDoc(doc(db, "users", userId), { role })
+      .then(() => {
+        alert("Role assigned successfully!");
+        DOM.roleForm.reset();
+      })
+      .catch((error) => displayError(DOM.roleError, "Failed to assign role: " + error.message));
+  });
+
+  DOM.searchInput.addEventListener("input", () => loadDocuments(auth.currentUser && auth.currentUser.uid));
+
+  DOM.loginBtn.addEventListener("click", () => showSession("login-section"));
+  DOM.logoutBtn.addEventListener("click", () => {
+    if (confirm("Are you sure you want to log out?")) {
+      signOut(auth)
+        .then(() => alert("You have been logged out."))
+        .catch((error) => alert("Logout failed: " + error.message));
+    }
+  });
+  DOM.registerBtn.addEventListener("click", () => showSession("registration-section"));
+
+  document.querySelectorAll("#nav-links a").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      showSession(e.target.getAttribute("href").substring(1));
+    });
+  });
+
+  DOM.hamburgerMenu.addEventListener("click", () => DOM.navLinks.classList.toggle("active"));
+
+  DOM.typeModal.addEventListener("click", (e) => { if (e.target === DOM.typeModal) toggleVisibility(DOM.typeModal, false); });
+  DOM.formatModal.addEventListener("click", (e) => { if (e.target === DOM.formatModal) toggleVisibility(DOM.formatModal, false); });
 });
 
-// Add Registration Functionality
-DOM.registrationForm = document.getElementById("registration-form");
-DOM.registrationSection = document.getElementById("registration-section");
-DOM.welcomeMessage = document.getElementById("welcome-message");
+// Document Management
 
-// Show Registration Section
-function showRegistration() {
-  toggleVisibility(DOM.registrationSection, true);
-  toggleVisibility(DOM.loginSection, false);
+function loadDocuments(isAdmin) {
+  DOM.documentList.innerHTML = "<p>Loading...</p>";
+  const searchTerm = DOM.searchInput.value.trim().toLowerCase();
+  const q = query(collection(db, "documents"), orderBy("timestamp", "desc"));
+  getDocs(q).then((querySnapshot) => {
+    DOM.documentList.innerHTML = "";
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (!searchTerm || data.title.toLowerCase().includes(searchTerm)) {
+        createDocumentListItem(docSnap.id, data, isAdmin);
+      }
+    });
+  }).catch((error) => {
+    DOM.documentList.innerHTML = `<p style="color: red;">Error loading documents: ${error.message}</p>`;
+  });
 }
 
-// Handle Registration
-DOM.registrationForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const username = e.target["reg-username"].value.trim();
-  const email = e.target["reg-email"].value.trim();
-  const password = e.target["reg-password"].value.trim();
-
-  if (!username || !email || !password) {
-    displayError(DOM.registrationError, "Please fill in all fields.");
-    return;
-  }
-
-  createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      console.log("User created:", user);
-
-      // Update the user's display name
-      return Promise.all([
-        updateProfile(user, { displayName: username }),
-        setDoc(doc(db, "users", user.uid), {
-          email: email,
-          role: "viewer", // Assign the default role as "viewer"
-        }),
-      ]);
-    })
-    .then(() => {
-      console.log("User added to Firestore");
-      alert("Registration successful! Please log in.");
-      toggleVisibility(DOM.registrationSection, false);
-      toggleVisibility(DOM.loginSection, true);
-    })
-    .catch((error) => {
-      console.error("Error during registration:", error);
-      displayError(DOM.registrationError, `Registration failed: ${error.message}`);
+function loadDocuments(isAdmin, startAfter = null, limit = 10) {
+  DOM.documentList.innerHTML = "";
+  const searchTerm = DOM.searchInput.value.trim().toLowerCase();
+  let q = query(
+    collection(db, "documents"),
+    orderBy("timestamp", "desc"),
+    limit(limit)
+  );
+  if (startAfter) q = query(q, startAfter(startAfter));
+  
+  getDocs(q).then((querySnapshot) => {
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (!searchTerm || data.title.toLowerCase().includes(searchTerm)) {
+        createDocumentListItem(docSnap.id, data, isAdmin);
+      }
     });
-});
+    // Add "Load More" button if there are more documents
+    if (querySnapshot.size === limit) {
+      const lastDoc = querySnapshot.docs[querySnapshot.size - 1];
+      const loadMoreBtn = document.createElement("button");
+      loadMoreBtn.textContent = "Load More";
+      loadMoreBtn.addEventListener("click", () => loadDocuments(isAdmin, lastDoc));
+      DOM.documentList.appendChild(loadMoreBtn);
+    }
+  }).catch((error) => alert("Error loading documents: " + error.message));
+}
 
-// Show Registration Section
-DOM.registerBtn = document.getElementById("register-btn");
+function createDocumentListItem(id, data, isAdmin) {
+  const li = document.createElement("li");
+  li.style.display = "flex";
+  li.style.justifyContent = "space-between";
+  li.style.alignItems = "center";
+  li.innerHTML = `<span style="flex: 1">${data.title}</span>`;
+  li.appendChild(createButtonContainer(id, data, isAdmin));
+  DOM.documentList.appendChild(li);
+}
 
-DOM.registerBtn.addEventListener("click", () => {
-  toggleVisibility(DOM.registrationSection, true); // Show the registration section
-  toggleVisibility(DOM.loginSection, false); // Hide the login section
-});
+function createButtonContainer(id, data, isAdmin) {
+  const container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.gap = "10px";
+  container.appendChild(createButton("Download", () => downloadDoc(data)));
 
-// Form Handling
-DOM.letterForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const formData = getFormData();
-  if (!isFormDataValid(formData)) return alert("Please fill in all fields.");
+  if (auth.currentUser) {
+    getDoc(doc(db, "users", auth.currentUser.uid)).then((userDoc) => {
+      const userRole = userDoc.data()?.role || "viewer";
+      if (userRole === "admin" || userRole === "editor") {
+        container.appendChild(createButton("Edit", () => editDoc(id, data)));
+      }
+      if (userRole === "admin") {
+        container.appendChild(createButton("Delete", () => removeDoc(id)));
+      }
+    });
+  }
+  return container;
+}
 
-  const id = DOM.editId.value;
-  id ? updateDocument(id, formData) : addDocument(formData); // Call addDocument for new documents
-});
+function createButton(text, onClick) {
+  const button = document.createElement("button");
+  button.textContent = text;
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+function addDocument(data) {
+  addDoc(collection(db, "documents"), { ...data, timestamp: serverTimestamp() })
+    .then(() => {
+      alert("Document added successfully!");
+      resetForm();
+      loadDocuments(true);
+    })
+    .catch((error) => alert("Failed to add document: " + error.message));
+}
+
+function updateDocument(id, data) {
+  updateDoc(doc(db, "documents", id), data)
+    .then(() => {
+      alert("Document updated successfully!");
+      resetForm();
+      loadDocuments(true);
+    })
+    .catch((error) => alert("Failed to update document: " + error.message));
+}
+
+function editDoc(id, data) {
+  DOM.formTitle.textContent = "Edit Document";
+  DOM.editId.value = id;
+  document.getElementById("sender-name").value = data.senderName;
+  document.getElementById("recipient-name").value = data.recipientName;
+  document.getElementById("salutation").value = data.salutation;
+  document.getElementById("title").value = data.title;
+  document.getElementById("content").value = data.content;
+  document.getElementById("specific-request").value = data.specificRequest;
+  document.getElementById("closing").value = data.closing;
+  toggleVisibility(DOM.cancelEditBtn, true);
+  showSession("admin-section");
+}
+
+function removeDoc(id) {
+  if (confirm("Are you sure you want to delete this document?")) {
+    deleteDoc(doc(db, "documents", id))
+      .then(() => {
+        alert("Document deleted successfully!");
+        loadDocuments(auth.currentUser && auth.currentUser.uid);
+      })
+      .catch((error) => alert("Failed to delete document: " + error.message));
+  }
+}
 
 function getFormData() {
   return {
-    senderName: document.getElementById("sender-name")?.value?.trim() || "",
-    recipientName:
-      document.getElementById("recipient-name")?.value?.trim() || "",
-    salutation: document.getElementById("salutation")?.value?.trim() || "",
-    title: document.getElementById("title")?.value?.trim() || "",
-    content: document.getElementById("content")?.value?.trim() || "",
-    specificRequest:
-      document.getElementById("specific-request")?.value?.trim() || "",
-    closing: document.getElementById("closing")?.value?.trim() || "",
+    senderName: document.getElementById("sender-name").value.trim(),
+    recipientName: document.getElementById("recipient-name").value.trim(),
+    salutation: document.getElementById("salutation").value.trim(),
+    title: document.getElementById("title").value.trim(),
+    content: document.getElementById("content").value.trim(),
+    specificRequest: document.getElementById("specific-request").value.trim(),
+    closing: document.getElementById("closing").value.trim(),
     timestamp: serverTimestamp(),
   };
 }
 
 function isFormDataValid(data) {
-  return Object.entries(data).every(
-    ([key, value]) =>
-      key === "timestamp" || (typeof value === "string" && value.trim() !== "")
-  );
+  return Object.entries(data).every(([key, value]) => key === "timestamp" || value.trim() !== "");
 }
 
 function resetForm() {
@@ -289,87 +340,19 @@ function resetForm() {
   toggleVisibility(DOM.cancelEditBtn, false);
 }
 
-DOM.cancelEditBtn.addEventListener("click", resetForm);
-
-// Document Management
-function loadDocuments(isAdmin) {
-  DOM.documentList.innerHTML = ""; // Clear the document list
-  const searchTerm = DOM.searchInput?.value?.trim().toLowerCase() || ""; // Handle search input
-  const q = query(collection(db, "documents"), orderBy("timestamp", "desc"));
-
-  getDocs(q)
-    .then((querySnapshot) => {
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (!searchTerm || data.title.toLowerCase().includes(searchTerm)) {
-          createDocumentListItem(docSnap.id, data, isAdmin);
-        }
-      });
-    })
-    .catch((error) => console.error("Error loading documents:", error));
-}
-
-function createDocumentListItem(id, data, isAdmin) {
-  const li = document.createElement("li");
-  li.style.display = "flex";
-  li.style.justifyContent = "space-between";
-  li.style.alignItems = "center";
-
-  const titleSpan = document.createElement("span");
-  titleSpan.textContent = data.title;
-  titleSpan.style.flex = "1";
-
-  const buttonContainer = createButtonContainer(id, data, isAdmin);
-
-  li.appendChild(titleSpan);
-  li.appendChild(buttonContainer);
-  DOM.documentList.appendChild(li);
-}
-
-function createButtonContainer(id, data, isAdmin) {
-  const container = document.createElement("div");
-  container.style.display = "flex";
-  container.style.gap = "10px";
-
-  const downloadButton = createButton("Download", () => downloadDoc(data));
-  container.appendChild(downloadButton);
-
-  // Check user role for edit/delete permissions
-  getDoc(doc(db, "users", auth.currentUser.uid)).then((userDoc) => {
-    const userRole = userDoc.data().role;
-
-    if (userRole === "admin" || userRole === "editor") {
-      const editButton = createButton("Edit", () => editDoc(id, data));
-      container.appendChild(editButton);
-    }
-
-    if (userRole === "admin") {
-      const deleteButton = createButton("Delete", () => removeDoc(id));
-      container.appendChild(deleteButton);
-    }
-  });
-
-  return container;
-}
-
-// Download Document
 function downloadDoc(data) {
-  const isLoggedIn = auth.currentUser && auth.currentUser.email === ADMIN_EMAIL;
-  isLoggedIn ? showTypeModal(data) : generateAgenda(data);
+  getDoc(doc(db, "users", auth.currentUser?.uid || "")).then((userDoc) => {
+    const isAdmin = userDoc.exists() && userDoc.data().role === "admin";
+    isAdmin ? showTypeModal(data) : generateAgenda(data);
+  }).catch(() => generateAgenda(data)); // Default to agenda for unauthenticated users
 }
 
 function showTypeModal(data) {
   toggleVisibility(DOM.typeModal, true);
-
-  DOM.typeModal.addEventListener("click", (event) => {
-    if (event.target === DOM.typeModal) toggleVisibility(DOM.typeModal, false);
-  });
-
   DOM.letterBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
     showFormatModal(data, "letter");
   };
-
   DOM.agendaBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
     generateAgenda(data);
@@ -378,359 +361,104 @@ function showTypeModal(data) {
 
 function showFormatModal(data, type) {
   toggleVisibility(DOM.formatModal, true);
-
-  DOM.formatModal.addEventListener("click", (event) => {
-    if (event.target === DOM.formatModal)
-      toggleVisibility(DOM.formatModal, false);
-  });
-
   DOM.pdfBtn.onclick = () => {
     toggleVisibility(DOM.formatModal, false);
     if (type === "letter") generatePDF(data);
   };
-
   DOM.docxBtn.onclick = () => {
     toggleVisibility(DOM.formatModal, false);
     if (type === "letter") generateDOCX(data);
   };
 }
 
-// Generate Agenda
-function generateAgenda(data) {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-
-  // Set font and size
-  doc.setFont("Times", "normal");
-  doc.setFontSize(12);
-
-  // Add content to the PDF
-  doc.text("Agenda", 10, 10);
-  doc.text("======", 10, 20);
-
-  doc.text(`Subject: ${data.title}`, 10, 30);
-  doc.text(`Greeting: ${data.salutation}`, 10, 40);
-
-  doc.text("Intro Paragraph:", 10, 50);
-  doc.text(data.content.split("\n")[0], 10, 60);
-
-  doc.text("Main Body:", 10, 70);
-  doc.text(data.content.split("\n").slice(1).join("\n"), 10, 80);
-
-  doc.text("Specific Request:", 10, 100);
-  doc.text(data.specificRequest, 10, 110);
-
-  doc.text("Closing:", 10, 120);
-  doc.text(data.closing, 10, 130);
-
-  doc.text("Signature:", 10, 140);
-  doc.text(data.senderName, 10, 150);
-
-  // Save the PDF
-  doc.save(`${data.title}-agenda.pdf`);
-}
-
-// Generate PDF
 function generatePDF(data) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF();
-
   doc.setFont("Times", "normal");
   doc.setFontSize(12);
-
-  doc.text(
-    new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    }),
-    10,
-    10
-  );
-  doc.text(data.recipientName, 10, 20);
-  doc.text(data.salutation, 10, 30);
-  doc.text(`Subject: ${data.title}`, 10, 40);
-  doc.text(data.content, 10, 50);
-  doc.text(`Specific Request: ${data.specificRequest}`, 10, 70);
-  doc.text(`Closing: ${data.closing}`, 10, 90);
-  doc.text(`Sincerely,`, 10, 110);
-  doc.text(data.senderName, 10, 120);
-
+  let y = 10;
+  const addText = (text, x) => {
+    const lines = doc.splitTextToSize(text, 180); // Wrap at 180 units
+    doc.text(lines, x, y);
+    y += lines.length * 7; // Adjust Y position
+  };
+  addText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), 10);
+  addText(data.recipientName, 10);
+  addText(data.salutation, 10);
+  addText(`Subject: ${data.title}`, 10);
+  addText(data.content, 10);
+  addText(`Specific Request: ${data.specificRequest}`, 10);
+  addText(`Closing: ${data.closing}`, 10);
+  addText("Sincerely,", 10);
+  addText(data.senderName, 10);
   doc.save(`${data.title}.pdf`);
 }
 
-// Generate DOCX
 function generateDOCX(data) {
   const doc = new window.docx.Document({
-    sections: [
-      {
-        properties: {
-          page: {
-            margin: {
-              top: window.docx.convertInchesToTwip(1),
-              bottom: window.docx.convertInchesToTwip(1),
-              left: window.docx.convertInchesToTwip(1),
-              right: window.docx.convertInchesToTwip(1),
-            },
-          },
-        },
-        children: [
-          new window.docx.Paragraph({
-            children: [
-              new window.docx.TextRun({
-                text: new Date().toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }),
-                font: "Times New Roman",
-                size: 24,
-              }),
-            ],
-            spacing: { after: 400 },
-            alignment: window.docx.AlignmentType.LEFT,
-          }),
-          new window.docx.Paragraph({
-            children: [
-              new window.docx.TextRun({
-                text: data.salutation,
-                font: "Times New Roman",
-                size: 24,
-              }),
-            ],
-            spacing: { after: 200 },
-            alignment: window.docx.AlignmentType.LEFT,
-          }),
-          new window.docx.Paragraph({
-            children: [
-              new window.docx.TextRun({
-                text: `Subject: ${data.title}`,
-                bold: true,
-                font: "Times New Roman",
-                size: 24,
-              }),
-            ],
-            spacing: { after: 200 },
-            alignment: window.docx.AlignmentType.LEFT,
-          }),
-          new window.docx.Paragraph({
-            children: data.content
-              .split("\n")
-              .map(
-                (line) =>
-                  new window.docx.TextRun({
-                    text: line,
-                    font: "Times New Roman",
-                    size: 24,
-                  })
-              ),
-            spacing: { after: 400 },
-            alignment: window.docx.AlignmentType.LEFT,
-          }),
-          new window.docx.Paragraph({
-            children: [
-              new window.docx.TextRun({
-                text: `Specific Request: ${data.specificRequest}`,
-                font: "Times New Roman",
-                size: 24,
-              }),
-            ],
-            spacing: { after: 400 },
-            alignment: window.docx.AlignmentType.LEFT,
-          }),
-          new window.docx.Paragraph({
-            children: [
-              new window.docx.TextRun({
-                text: data.closing,
-                font: "Times New Roman",
-                size: 24,
-              }),
-            ],
-            spacing: { after: 200 },
-            alignment: window.docx.AlignmentType.LEFT,
-          }),
-          new window.docx.Paragraph({
-            children: [
-              new window.docx.TextRun({
-                text: data.senderName,
-                font: "Times New Roman",
-                size: 24,
-              }),
-            ],
-            alignment: window.docx.AlignmentType.LEFT,
-          }),
-        ],
-      },
-    ],
+    sections: [{
+      children: [
+        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), font: "Times New Roman", size: 24 })], spacing: { after: 400 } }),
+        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.salutation, font: "Times New Roman", size: 24 })], spacing: { after: 200 } }),
+        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Subject: ${data.title}`, bold: true, font: "Times New Roman", size: 24 })], spacing: { after: 200 } }),
+        new window.docx.Paragraph({ children: data.content.split("\n").map(line => new window.docx.TextRun({ text: line, font: "Times New Roman", size: 24 })), spacing: { after: 400 } }),
+        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Specific Request: ${data.specificRequest}`, font: "Times New Roman", size: 24 })], spacing: { after: 400 } }),
+        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.closing, font: "Times New Roman", size: 24 })], spacing: { after: 200 } }),
+        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.senderName, font: "Times New Roman", size: 24 })] }),
+      ],
+    }],
   });
-
-  window.docx.Packer.toBlob(doc).then((blob) =>
-    saveAs(blob, `${data.title}.docx`)
-  );
+  window.docx.Packer.toBlob(doc).then((blob) => saveAs(blob, `${data.title}.docx`));
 }
 
-// Role Management
-DOM.roleForm = document.getElementById("role-form");
-DOM.roleManagementSection = document.getElementById("role-management-section");
-
-function showRoleManagement() {
-  toggleVisibility(DOM.roleManagementSection, true);
+function generateAgenda(data) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFont("Times", "normal");
+  doc.setFontSize(12);
+  doc.text("Agenda", 10, 10);
+  doc.text("======", 10, 20);
+  doc.text(`Subject: ${data.title}`, 10, 30);
+  doc.text(`Greeting: ${data.salutation}`, 10, 40);
+  doc.text("Intro Paragraph:", 10, 50);
+  doc.text(data.content.split("\n")[0], 10, 60);
+  doc.text("Main Body:", 10, 70);
+  doc.text(data.content.split("\n").slice(1).join("\n"), 10, 80);
+  doc.text("Specific Request:", 10, 100);
+  doc.text(data.specificRequest, 10, 110);
+  doc.text("Closing:", 10, 120);
+  doc.text(data.closing, 10, 130);
+  doc.text("Signature:", 10, 140);
+  doc.text(data.senderName, 10, 150);
+  doc.save(`${data.title}-agenda.pdf`);
 }
-
-DOM.roleForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  const userId = e.target["user-email"].value; // Get the selected user ID
-  const role = e.target["user-role"].value;
-
-  if (!userId || !role) {
-    displayError(DOM.roleError, "Please select a user and a role.");
-    return;
-  }
-
-  updateDoc(doc(db, "users", userId), { role })
-    .then(() => {
-      alert("Role assigned successfully!");
-      DOM.roleForm.reset();
-    })
-    .catch((error) => {
-      displayError(DOM.roleError, `Failed to assign role: ${error.message}`);
-    });
-});
 
 function populateUserDropdown() {
   const userEmailDropdown = document.getElementById("user-email");
-  userEmailDropdown.innerHTML = '<option value="" disabled selected>Select a user</option>'; // Reset dropdown
-
-  const usersRef = collection(db, "users");
-  getDocs(usersRef)
-    .then((querySnapshot) => {
-      querySnapshot.forEach((docSnap) => {
-        const userData = docSnap.data();
-        const option = document.createElement("option");
-        option.value = docSnap.id; // Use the document ID as the value
-        option.textContent = userData.email; // Display the email
-        userEmailDropdown.appendChild(option);
-      });
-    })
-    .catch((error) => {
-      console.error("Error fetching users:", error);
+  userEmailDropdown.innerHTML = '<option value="" disabled selected>Select a user</option>';
+  getDocs(collection(db, "users")).then((querySnapshot) => {
+    querySnapshot.forEach((docSnap) => {
+      const option = document.createElement("option");
+      option.value = docSnap.id;
+      option.textContent = docSnap.data().email;
+      userEmailDropdown.appendChild(option);
     });
+  }).catch((error) => alert("Error fetching users: " + error.message));
 }
 
-// Hamburger Menu Toggle
-const hamburgerMenu = document.getElementById("hamburger-menu");
-const navLinks = document.getElementById("nav-links");
-
-hamburgerMenu.addEventListener("click", () => {
-  navLinks.classList.toggle("active");
-});
-
-// Function to show only one session at a time
-function showSession(sessionId) {
-  // Hide all sections
-  const sections = [
-    DOM.adminSection,
-    DOM.roleManagementSection,
-    DOM.registrationSection,
-    DOM.loginSection,
-    DOM.guestSection,
-  ];
-  sections.forEach((section) => toggleVisibility(section, false));
-
-  // Show the selected section
-  const session = document.getElementById(sessionId);
-  toggleVisibility(session, true);
-}
-
-// Set default session to "Create Letter/Agenda"
-document.addEventListener("DOMContentLoaded", () => {
-  showSession("admin-section"); // Default session
-});
-
-// Set default session to "View Documents"
-document.addEventListener("DOMContentLoaded", () => {
-  showSession("guest-section"); // Default session
-  loadDocuments(false); // Load documents for non-logged-in users
-});
-
-// Add event listeners for navigation links
-document.querySelectorAll("#nav-links a").forEach((link) => {
-  link.addEventListener("click", (e) => {
-    e.preventDefault();
-    const targetId = e.target.getAttribute("href").substring(1); // Get the target section ID
-    showSession(targetId);
-  });
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  // Add event listeners for login, logout, and register buttons
-  DOM.loginBtn.addEventListener("click", () => {
-    toggleVisibility(DOM.loginSection, true); // Show the login section
-    toggleVisibility(DOM.registrationSection, false); // Hide the registration section
-  });
-
-  DOM.logoutBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to log out?")) {
-      signOut(auth)
-        .then(() => {
-          console.log("Logged out successfully");
-          handleUserLoggedOut(); // Reset the UI after logout
-          alert("You have been logged out.");
-        })
-        .catch((error) => {
-          console.error("Logout failed:", error.message);
-          alert("Logout failed: " + error.message);
-        });
+function initializeDocumentsCollection() {
+  getDocs(collection(db, "documents")).then((querySnapshot) => {
+    if (querySnapshot.empty) {
+      addDoc(collection(db, "documents"), {
+        senderName: "Admin",
+        recipientName: "Test User",
+        salutation: "Dear",
+        title: "Welcome Letter",
+        content: "This is a test letter.",
+        specificRequest: "Please review.",
+        closing: "Best regards",
+        timestamp: serverTimestamp(),
+      }).then(() => loadDocuments(false));
     }
-  });
-
-  DOM.registerBtn.addEventListener("click", () => {
-    toggleVisibility(DOM.registrationSection, true); // Show the registration section
-    toggleVisibility(DOM.loginSection, false); // Hide the login section
-  });
-
-  // Add event listeners for navigation links
-  document.querySelectorAll("#nav-links a").forEach((link) => {
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
-      const targetId = e.target.getAttribute("href").substring(1); // Get the target section ID
-      showSession(targetId);
-    });
-  });
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  DOM.registerBtn.addEventListener("click", () => {
-    toggleVisibility(DOM.registrationSection, true); // Show the registration section
-    toggleVisibility(DOM.loginSection, false); // Hide the login section
-  });
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  DOM.loginBtn.addEventListener("click", () => {
-    toggleVisibility(DOM.loginSection, true); // Show the login section
-    toggleVisibility(DOM.registrationSection, false); // Hide the registration section
-  });
-});
-
-console.log("Login Button:", DOM.loginBtn);
-console.log("Logout Button:", DOM.logoutBtn);
-console.log("Register Button:", DOM.registerBtn);
-console.log("Registration Section:", DOM.registrationSection);
-
-function addDocument(data) {
-  const documentsRef = collection(db, "documents");
-  addDoc(documentsRef, {
-    ...data,
-    timestamp: serverTimestamp(), // Add a timestamp
-  })
-    .then(() => {
-      alert("Document added successfully!");
-      resetForm(); // Reset the form after successful submission
-      loadDocuments(true); // Reload the documents list
-    })
-    .catch((error) => {
-      console.error("Error adding document:", error);
-      alert("Failed to add document: " + error.message);
-    });
+  }).catch((error) => alert("Error initializing documents: " + error.message));
 }

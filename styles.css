@@ -374,6 +374,10 @@ textarea {
   cursor: pointer;
 }
 
+.hamburger-menu.active::before {
+  content: "✖";
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .nav-links {
