@@ -71,14 +71,14 @@ function handleUserLoggedIn(user) {
   toggleVisibility(DOM.registerBtn, false); // Hide the register button
   toggleVisibility(DOM.loginSection, false); // Hide the login section
 
-  // Display a welcome message
-  DOM.welcomeMessage.textContent = `Hi, ${user.displayName || "User"}`;
-
   // Check if the user is an admin
   getDoc(doc(db, "users", user.uid))
     .then((userDoc) => {
       const userData = userDoc.data();
       if (userData.role === "admin") {
+        // Display "Hi, Admin" in the header
+        DOM.welcomeMessage.textContent = "Hi, Admin";
+
         // Show admin-specific sections
         toggleVisibility(DOM.adminSection, true);
         toggleVisibility(DOM.roleManagementSection, true);
@@ -86,6 +86,9 @@ function handleUserLoggedIn(user) {
         populateUserDropdown(); // Populate the dropdown with user emails
         loadDocuments(true); // Load documents with admin privileges
       } else {
+        // Display the user's display name in the header
+        DOM.welcomeMessage.textContent = `Hi, ${user.displayName || "User"}`;
+
         // Show sections for regular users
         toggleVisibility(DOM.adminSection, true); // Allow document creation
         toggleVisibility(DOM.roleManagementSection, false); // Hide role management
