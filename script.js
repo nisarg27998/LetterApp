@@ -219,7 +219,9 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll("#nav-links a").forEach((link) => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
-      showSession(e.target.getAttribute("href").substring(1));
+      const sectionId = e.target.getAttribute("href").substring(1);
+      showSession(sectionId);
+      DOM.navLinks.classList.remove("active"); // Close the menu
     });
   });
 });
