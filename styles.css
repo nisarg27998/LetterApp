@@ -37,7 +37,39 @@ button:hover {
 }
 
 button:active {
-  transform: scale(0.95); /* Scale down to 95% on click */
+  transform: scale(0.95);
+}
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 10px 20px;
+  border-radius: 5px;
+  color: white;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  z-index: 2000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-success {
+  background-color: #2ecc71;
+}
+
+.toast-error {
+  background-color: #e74c3c;
+}
+
+.toast-info {
+  background-color: #3498db;
 }
 
 section {
@@ -52,8 +84,8 @@ form {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  max-width: 400px; /* Reduced width for login form */
-  margin: 0 auto; /* Center the form */
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 input,
@@ -74,7 +106,7 @@ textarea {
 /* Login Section */
 #login-section {
   max-width: 500px;
-  margin: 40px auto; /* Center login section */
+  margin: 40px auto;
   padding: 30px;
   background-color: #fff;
   border-radius: 10px;
@@ -166,42 +198,36 @@ textarea {
 }
 
 #document-list button {
-  margin-left: 15px; /* Consistent margin */
-  padding: 8px 16px; /* Consistent padding */
+  margin-left: 15px;
+  padding: 8px 16px;
   border-radius: 5px;
   color: white;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.1s; /* Added transform */
 }
 
 #document-list button:nth-child(1) {
-  /* Download */
-  margin-left: 0; /* No left margin on first button */
+  margin-left: 0;
   background-color: #3498db;
 }
 
 #document-list button:nth-child(2) {
-  /* Edit */
   background-color: #f1c40f;
 }
 
 #document-list button:nth-child(3) {
-  /* Delete */
   background-color: #e74c3c;
 }
 
 #document-list button:nth-child(1):hover {
-  /* Download hover */
   background-color: #2980b9;
 }
 
 #document-list button:nth-child(2):hover {
-  /* Edit hover */
   background-color: #d4ac0d;
 }
 
 #document-list button:nth-child(3):hover {
-  /* Delete hover */
   background-color: #c0392b;
 }
 
@@ -221,12 +247,12 @@ textarea {
 
 /* Admin Section */
 #admin-section textarea {
-  min-height: 60px; /* Smaller for address fields */
+  min-height: 60px;
 }
 
 #admin-section input,
 #admin-section textarea {
-  margin-bottom: 10px; /* Consistent spacing */
+  margin-bottom: 10px;
 }
 
 /* Modals */
@@ -263,7 +289,7 @@ textarea {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.1s; /* Added transform */
 }
 
 #pdf-btn {
@@ -299,7 +325,7 @@ textarea {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.1s; /* Added transform */
 }
 
 #letter-btn {
@@ -376,11 +402,11 @@ textarea {
   color: white;
   font-size: 24px;
   cursor: pointer;
-  transition: transform 0.1s; /* Add transition for consistency */
+  transition: transform 0.1s;
 }
 
 .hamburger-menu:active {
-  transform: scale(0.95); /* Apply animation to hamburger too */
+  transform: scale(0.95);
 }
 
 .hamburger-menu.active::before {

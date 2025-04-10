@@ -25,10 +25,10 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
-const app = initializeApp(firebaseConfig); // Initialize Firebase
-const auth = getAuth(app); // Initialize Firebase Authentication
-const db = getFirestore(app); // Initialize Firestore
-const { saveAs } = window.saveAs; // Initialize FileSaver.js
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const { saveAs } = window.saveAs;
 
 const DOM = {
   loginBtn: document.getElementById("login-btn"),
@@ -60,6 +60,20 @@ const DOM = {
   hamburgerMenu: document.getElementById("hamburger-menu"),
   navLinks: document.getElementById("nav-links"),
 };
+
+// Toast Function
+function showToast(message, type = "info") {
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("show"), 100); // Delay to allow CSS to apply
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 300); // Wait for fade-out animation
+  }, 3000); // Display for 3 seconds
+}
 
 // Authentication State
 onAuthStateChanged(auth, (user) =>
@@ -131,19 +145,23 @@ function showSession(sessionId) {
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
-  showSession("guest-section"); // Show guest section by default
-  loadDocuments("user"); // Load user documents by default
-  initializeDocumentsCollection(); // Initialize documents collection if empty
+  showSession("guest-section");
+  loadDocuments("user");
+  initializeDocumentsCollection();
 
   DOM.loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const email = e.target.email.value.trim();
     const password = e.target.password.value.trim();
     signInWithEmailAndPassword(auth, email, password)
-      .then(() => toggleVisibility(DOM.loginSection, false))
-      .catch((error) =>
-        displayError(DOM.loginError, "Login failed: " + error.message)
-      );
+      .then(() => {
+        toggleVisibility(DOM.loginSection, false);
+        showToast("Login successful!", "success");
+      })
+      .catch((error) => {
+        displayError(DOM.loginError, "Login failed: " + error.message);
+        showToast("Login failed!", "error");
+      });
   });
 
   DOM.registrationForm.addEventListener("submit", (e) => {
@@ -160,23 +178,25 @@ document.addEventListener("DOMContentLoaded", () => {
         ]);
       })
       .then(() => {
-        alert("Registration successful! Please log in.");
+        showToast("Registration successful! Please log in.", "success");
         showSession("login-section");
       })
-      .catch((error) =>
-        displayError(
-          DOM.registrationError,
-          "Registration failed: " + error.message
-        )
-      );
+      .catch((error) => {
+        displayError(DOM.registrationError, "Registration failed: " + error.message);
+        showToast("Registration failed!", "error");
+      });
   });
 
   DOM.letterForm.addEventListener("submit", (e) => {
     e.preventDefault();
     const formData = getFormData();
-    if (!isFormDataValid(formData)) return alert("Please fill in all fields.");
-    const id = DOM.editId.value;
-    id ? updateDocument(id, formData) : addDocument(formData);
+    if (!isFormDataValid(formData)) {
+      showToast("Please fill in all fields!", "error");
+      return;
+    }
+    toggleVisibility(DOM.typeModal, true);
+    DOM.letterBtn.onclick = () => saveDoc(formData, "letter");
+    DOM.agendaBtn.onclick = () => saveDoc(formData, "agenda");
   });
 
   DOM.cancelEditBtn.addEventListener("click", resetForm);
@@ -187,12 +207,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const role = e.target["user-role"].value;
     updateDoc(doc(db, "users", userId), { role })
       .then(() => {
-        alert("Role assigned successfully!");
+        showToast("Role assigned successfully!", "success");
         DOM.roleForm.reset();
       })
-      .catch((error) =>
-        displayError(DOM.roleError, "Failed to assign role: " + error.message)
-      );
+      .catch((error) => {
+        showToast("Failed to assign role!", "error");
+      });
   });
 
   let timeout;
@@ -206,8 +226,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   DOM.loginBtn.addEventListener("click", () => showSession("login-section"));
   DOM.logoutBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to log out?"))
-      signOut(auth).then(() => alert("Logged out."));
+    if (confirm("Are you sure you want to log out?")) {
+      signOut(auth).then(() => showToast("Logged out!", "info"));
+    }
   });
   DOM.registerBtn.addEventListener("click", () =>
     showSession("registration-section")
@@ -221,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const sectionId = e.target.getAttribute("href").substring(1);
       showSession(sectionId);
-      DOM.navLinks.classList.remove("active"); // Close the menu
+      DOM.navLinks.classList.remove("active");
     });
   });
 });
@@ -274,12 +295,10 @@ async function createButtonContainer(id, data, role) {
   container.style.display = "flex";
   container.style.gap = "10px";
 
-  // All roles can download (with different options)
   container.appendChild(
     createButton("Download", () => showDownloadOptions(data, role))
   );
 
-  // Only Admin and Editor can edit/delete
   if (role === "admin" || role === "editor") {
     container.appendChild(createButton("Edit", () => editDoc(id, data)));
     container.appendChild(createButton("Delete", () => removeDoc(id)));
@@ -295,24 +314,24 @@ function createButton(text, onClick) {
   return button;
 }
 
-function addDocument(data) {
-  addDoc(collection(db, "documents"), { ...data, timestamp: serverTimestamp() })
+function saveDoc(data, type) {
+  const id = DOM.editId.value;
+  const action = id
+    ? updateDoc(doc(db, "documents", id), { ...data, type })
+    : addDoc(collection(db, "documents"), { ...data, type, timestamp: serverTimestamp() });
+  action
     .then(() => {
-      alert("Document added successfully!");
+      toggleVisibility(DOM.typeModal, false);
       resetForm();
-      loadDocuments("admin");
+      loadDocuments(auth.currentUser ? getUserRole() : "user");
+      showToast(
+        id ? "Document updated successfully!" : "Document saved successfully!",
+        "success"
+      );
     })
-    .catch((error) => alert("Failed to add document: " + error.message));
-}
-
-function updateDocument(id, data) {
-  updateDoc(doc(db, "documents", id), data)
-    .then(() => {
-      alert("Document updated successfully!");
-      resetForm();
-      loadDocuments("admin");
-    })
-    .catch((error) => alert("Failed to update document: " + error.message));
+    .catch((error) => {
+      showToast("Failed to save document!", "error");
+    });
 }
 
 function editDoc(id, data) {
@@ -333,10 +352,12 @@ function removeDoc(id) {
   if (confirm("Are you sure you want to delete this document?")) {
     deleteDoc(doc(db, "documents", id))
       .then(() => {
-        alert("Document deleted successfully!");
+        showToast("Document deleted successfully!", "info");
         loadDocuments(auth.currentUser ? getUserRole() : "user");
       })
-      .catch((error) => alert("Failed to delete document: " + error.message));
+      .catch((error) => {
+        showToast("Failed to delete document!", "error");
+      });
   }
 }
 
@@ -451,6 +472,7 @@ function generatePDF(data, type) {
     doc.text(data.senderName, 10, y);
   }
   doc.save(`${data.title}-${type}.pdf`);
+  showToast(`Downloaded ${type} as PDF!`, "info");
 }
 
 function generateDOCX(data, type) {
@@ -675,9 +697,10 @@ function generateDOCX(data, type) {
       },
     ],
   });
-  window.docx.Packer.toBlob(doc).then((blob) =>
-    saveAs(blob, `${data.title}-${type}.docx`)
-  );
+  window.docx.Packer.toBlob(doc).then((blob) => {
+    saveAs(blob, `${data.title}-${type}.docx`);
+    showToast(`Downloaded ${type} as DOCX!`, "info");
+  });
 }
 
 async function getUserRole() {
@@ -699,7 +722,7 @@ function populateUserDropdown() {
         userEmailDropdown.appendChild(option);
       });
     })
-    .catch((error) => alert("Error fetching users: " + error.message));
+    .catch((error) => showToast("Error fetching users!", "error"));
 }
 
 function initializeDocumentsCollection() {
@@ -718,5 +741,5 @@ function initializeDocumentsCollection() {
         }).then(() => loadDocuments("user"));
       }
     })
-    .catch((error) => alert("Error initializing documents: " + error.message));
+    .catch((error) => showToast("Error initializing documents!", "error"));
 }
