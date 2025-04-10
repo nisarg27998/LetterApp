@@ -77,7 +77,7 @@ async function handleUserLoggedIn(user) {
   toggleVisibility(DOM.roleManagementSection, role === "admin");
   toggleVisibility(DOM.adminNav, role === "admin");
   toggleVisibility(DOM.guestSection, true);
-  
+
   if (role === "admin") {
     populateUserDropdown();
     showSession("admin-section");
@@ -179,6 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearTimeout(timeout);
     timeout = setTimeout(() => loadDocuments(auth.currentUser ? getUserRole() : "user"), 300);
   });
+
 
   DOM.loginBtn.addEventListener("click", () => showSession("login-section"));
   DOM.logoutBtn.addEventListener("click", () => {
