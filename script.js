@@ -21,12 +21,14 @@ import {
   getDoc,
   setDoc,
   startAfter,
+  limit,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app = initializeApp(firebaseConfig); // Initialize Firebase
+const auth = getAuth(app); // Initialize Firebase Authentication
+const db = getFirestore(app); // Initialize Firestore
+const { saveAs } = window.saveAs; // Initialize FileSaver.js
 
 const DOM = {
   loginBtn: document.getElementById("login-btn"),
@@ -60,7 +62,9 @@ const DOM = {
 };
 
 // Authentication State
-onAuthStateChanged(auth, (user) => user ? handleUserLoggedIn(user) : handleUserLoggedOut());
+onAuthStateChanged(auth, (user) =>
+  user ? handleUserLoggedIn(user) : handleUserLoggedOut()
+);
 
 async function handleUserLoggedIn(user) {
   const userDoc = await getDoc(doc(db, "users", user.uid));
@@ -71,7 +75,9 @@ async function handleUserLoggedIn(user) {
   toggleVisibility(DOM.logoutBtn, true);
   toggleVisibility(DOM.registerBtn, false);
   toggleVisibility(DOM.loginSection, false);
-  DOM.welcomeMessage.textContent = `Hi, ${role === "admin" ? "Admin" : user.displayName || "User"}`;
+  DOM.welcomeMessage.textContent = `Hi, ${
+    role === "admin" ? "Admin" : user.displayName || "User"
+  }`;
 
   toggleVisibility(DOM.adminSection, role === "admin");
   toggleVisibility(DOM.roleManagementSection, role === "admin");
@@ -112,16 +118,22 @@ function displayError(element, message) {
 }
 
 function showSession(sessionId) {
-  const sections = [DOM.adminSection, DOM.roleManagementSection, DOM.registrationSection, DOM.loginSection, DOM.guestSection];
+  const sections = [
+    DOM.adminSection,
+    DOM.roleManagementSection,
+    DOM.registrationSection,
+    DOM.loginSection,
+    DOM.guestSection,
+  ];
   sections.forEach((section) => toggleVisibility(section, false));
   toggleVisibility(document.getElementById(sessionId), true);
 }
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
-  showSession("guest-section");
-  loadDocuments("user");
-  initializeDocumentsCollection();
+  showSession("guest-section"); // Show guest section by default
+  loadDocuments("user"); // Load user documents by default
+  initializeDocumentsCollection(); // Initialize documents collection if empty
 
   DOM.loginForm.addEventListener("submit", (e) => {
     e.preventDefault();
@@ -129,7 +141,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = e.target.password.value.trim();
     signInWithEmailAndPassword(auth, email, password)
       .then(() => toggleVisibility(DOM.loginSection, false))
-      .catch((error) => displayError(DOM.loginError, "Login failed: " + error.message));
+      .catch((error) =>
+        displayError(DOM.loginError, "Login failed: " + error.message)
+      );
   });
 
   DOM.registrationForm.addEventListener("submit", (e) => {
@@ -149,7 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Registration successful! Please log in.");
         showSession("login-section");
       })
-      .catch((error) => displayError(DOM.registrationError, "Registration failed: " + error.message));
+      .catch((error) =>
+        displayError(
+          DOM.registrationError,
+          "Registration failed: " + error.message
+        )
+      );
   });
 
   DOM.letterForm.addEventListener("submit", (e) => {
@@ -171,22 +190,31 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Role assigned successfully!");
         DOM.roleForm.reset();
       })
-      .catch((error) => displayError(DOM.roleError, "Failed to assign role: " + error.message));
+      .catch((error) =>
+        displayError(DOM.roleError, "Failed to assign role: " + error.message)
+      );
   });
 
   let timeout;
   DOM.searchInput.addEventListener("input", () => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => loadDocuments(auth.currentUser ? getUserRole() : "user"), 300);
+    timeout = setTimeout(
+      () => loadDocuments(auth.currentUser ? getUserRole() : "user"),
+      300
+    );
   });
-
 
   DOM.loginBtn.addEventListener("click", () => showSession("login-section"));
   DOM.logoutBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to log out?")) signOut(auth).then(() => alert("Logged out."));
+    if (confirm("Are you sure you want to log out?"))
+      signOut(auth).then(() => alert("Logged out."));
   });
-  DOM.registerBtn.addEventListener("click", () => showSession("registration-section"));
-  DOM.hamburgerMenu.addEventListener("click", () => DOM.navLinks.classList.toggle("active"));
+  DOM.registerBtn.addEventListener("click", () =>
+    showSession("registration-section")
+  );
+  DOM.hamburgerMenu.addEventListener("click", () =>
+    DOM.navLinks.classList.toggle("active")
+  );
 
   document.querySelectorAll("#nav-links a").forEach((link) => {
     link.addEventListener("click", (e) => {
@@ -200,7 +228,11 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadDocuments(role, startAfterDoc = null, limit = 10) {
   DOM.documentList.innerHTML = "<p>Loading...</p>";
   const searchTerm = DOM.searchInput.value.trim().toLowerCase();
-  let q = query(collection(db, "documents"), orderBy("timestamp", "desc"), limit(limit));
+  let q = query(
+    collection(db, "documents"),
+    orderBy("timestamp", "desc"),
+    limit(limit)
+  );
   if (startAfterDoc) q = query(q, startAfter(startAfterDoc));
 
   try {
@@ -241,7 +273,9 @@ async function createButtonContainer(id, data, role) {
   container.style.gap = "10px";
 
   // All roles can download (with different options)
-  container.appendChild(createButton("Download", () => showDownloadOptions(data, role)));
+  container.appendChild(
+    createButton("Download", () => showDownloadOptions(data, role))
+  );
 
   // Only Admin and Editor can edit/delete
   if (role === "admin" || role === "editor") {
@@ -332,11 +366,15 @@ function showDownloadOptions(data, role) {
   toggleVisibility(DOM.typeModal, true);
   DOM.letterBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
-    role === "user" ? generatePDF(data, "letter") : showFormatModal(data, "letter");
+    role === "user"
+      ? generatePDF(data, "letter")
+      : showFormatModal(data, "letter");
   };
   DOM.agendaBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
-    role === "user" ? generatePDF(data, "agenda") : showFormatModal(data, "agenda");
+    role === "user"
+      ? generatePDF(data, "agenda")
+      : showFormatModal(data, "agenda");
   };
 }
 
@@ -365,7 +403,14 @@ function generatePDF(data, type) {
       doc.text(lines, x, y);
       y += lines.length * 7;
     };
-    addText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), 10);
+    addText(
+      new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+      10
+    );
     addText(data.recipientName, 10);
     addText(data.salutation, 10);
     addText(`Subject: ${data.title}`, 10);
@@ -375,19 +420,32 @@ function generatePDF(data, type) {
     addText("Sincerely,", 10);
     addText(data.senderName, 10);
   } else {
-    doc.text("Agenda", 10, y); y += 10;
-    doc.text("======", 10, y); y += 10;
-    doc.text(`Subject: ${data.title}`, 10, y); y += 10;
-    doc.text(`Greeting: ${data.salutation}`, 10, y); y += 10;
-    doc.text("Intro Paragraph:", 10, y); y += 10;
-    doc.text(data.content.split("\n")[0], 10, y); y += 10;
-    doc.text("Main Body:", 10, y); y += 10;
-    doc.text(data.content.split("\n").slice(1).join("\n"), 10, y); y += 20;
-    doc.text("Specific Request:", 10, y); y += 10;
-    doc.text(data.specificRequest, 10, y); y += 10;
-    doc.text("Closing:", 10, y); y += 10;
-    doc.text(data.closing, 10, y); y += 10;
-    doc.text("Signature:", 10, y); y += 10;
+    doc.text("Agenda", 10, y);
+    y += 10;
+    doc.text("======", 10, y);
+    y += 10;
+    doc.text(`Subject: ${data.title}`, 10, y);
+    y += 10;
+    doc.text(`Greeting: ${data.salutation}`, 10, y);
+    y += 10;
+    doc.text("Intro Paragraph:", 10, y);
+    y += 10;
+    doc.text(data.content.split("\n")[0], 10, y);
+    y += 10;
+    doc.text("Main Body:", 10, y);
+    y += 10;
+    doc.text(data.content.split("\n").slice(1).join("\n"), 10, y);
+    y += 20;
+    doc.text("Specific Request:", 10, y);
+    y += 10;
+    doc.text(data.specificRequest, 10, y);
+    y += 10;
+    doc.text("Closing:", 10, y);
+    y += 10;
+    doc.text(data.closing, 10, y);
+    y += 10;
+    doc.text("Signature:", 10, y);
+    y += 10;
     doc.text(data.senderName, 10, y);
   }
   doc.save(`${data.title}-${type}.pdf`);
@@ -397,38 +455,229 @@ function generateDOCX(data, type) {
   const doc = new window.docx.Document({
     sections: [
       {
-        children: type === "letter" ? [
-          new window.docx.Paragraph({
-            children: [new window.docx.TextRun({ text: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), font: "Times New Roman", size: 24 })],
-            spacing: { after: 400 },
-          }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.recipientName, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.salutation, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Subject: ${data.title}`, bold: true, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: data.content.split("\n").map(line => new window.docx.TextRun({ text: line, font: "Times New Roman", size: 24 })) }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Specific Request: ${data.specificRequest}`, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.closing, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: "Sincerely,", font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.senderName, font: "Times New Roman", size: 24 })] }),
-        ] : [
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: "Agenda", font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: "======", font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Subject: ${data.title}`, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Greeting: ${data.salutation}`, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: "Intro Paragraph:", font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.content.split("\n")[0], font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: "Main Body:", font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: data.content.split("\n").slice(1).map(line => new window.docx.TextRun({ text: line, font: "Times New Roman", size: 24 })) }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Specific Request: ${data.specificRequest}`, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: "Closing:", font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.closing, font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: "Signature:", font: "Times New Roman", size: 24 })] }),
-          new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.senderName, font: "Times New Roman", size: 24 })] }),
-        ],
+        children:
+          type === "letter"
+            ? [
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: new Date().toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      }),
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                  spacing: { after: 400 },
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: data.recipientName,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: data.salutation,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: `Subject: ${data.title}`,
+                      bold: true,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: data.content
+                    .split("\n")
+                    .map(
+                      (line) =>
+                        new window.docx.TextRun({
+                          text: line,
+                          font: "Times New Roman",
+                          size: 24,
+                        })
+                    ),
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: `Specific Request: ${data.specificRequest}`,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: data.closing,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: "Sincerely,",
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: data.senderName,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+              ]
+            : [
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: "Agenda",
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: "======",
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: `Subject: ${data.title}`,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: `Greeting: ${data.salutation}`,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: "Intro Paragraph:",
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: data.content.split("\n")[0],
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: "Main Body:",
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: data.content
+                    .split("\n")
+                    .slice(1)
+                    .map(
+                      (line) =>
+                        new window.docx.TextRun({
+                          text: line,
+                          font: "Times New Roman",
+                          size: 24,
+                        })
+                    ),
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: `Specific Request: ${data.specificRequest}`,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: "Closing:",
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: data.closing,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: "Signature:",
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+                new window.docx.Paragraph({
+                  children: [
+                    new window.docx.TextRun({
+                      text: data.senderName,
+                      font: "Times New Roman",
+                      size: 24,
+                    }),
+                  ],
+                }),
+              ],
       },
     ],
   });
-  window.docx.Packer.toBlob(doc).then((blob) => saveAs(blob, `${data.title}-${type}.docx`));
+  window.docx.Packer.toBlob(doc).then((blob) =>
+    saveAs(blob, `${data.title}-${type}.docx`)
+  );
 }
 
 async function getUserRole() {
@@ -439,7 +688,8 @@ async function getUserRole() {
 
 function populateUserDropdown() {
   const userEmailDropdown = document.getElementById("user-email");
-  userEmailDropdown.innerHTML = '<option value="" disabled selected>Select a user</option>';
+  userEmailDropdown.innerHTML =
+    '<option value="" disabled selected>Select a user</option>';
   getDocs(collection(db, "users"))
     .then((querySnapshot) => {
       querySnapshot.forEach((docSnap) => {
