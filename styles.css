@@ -390,6 +390,7 @@ textarea {
     width: 200px;
     padding: 10px;
     border-radius: 5px;
+    transition: all 0.3s ease;
   }
 
   .nav-links.active {
@@ -422,4 +423,19 @@ textarea {
     margin: 20px 10px;
     padding: 20px;
   }
+}
+
+
+.auth-section {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+#login-section,
+#registration-section {
+  @extend .auth-section; /* If using a preprocessor like SASS */
 }
