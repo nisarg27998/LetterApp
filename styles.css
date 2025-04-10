@@ -228,7 +228,7 @@ textarea {
 }
 
 #document-list button:nth-child(3):hover {
-  background-color: "c0392b;
+  background-color: #c0392b;
 }
 
 /* Search Bar */
@@ -485,5 +485,5 @@ textarea {
 
 #login-section,
 #registration-section {
-  @extend .auth-section; /* If using a preprocessor like SASS */
+  /* Removed @extend, styles already applied above */
 }
