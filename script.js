@@ -225,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Document Management
-async function loadDocuments(role, startAfterDoc = null, limit = 10) {
+async function loadDocuments(role, startAfterDoc = null) {
   DOM.documentList.innerHTML = "<p>Loading...</p>";
   const searchTerm = DOM.searchInput.value.trim().toLowerCase();
   let q = query(
