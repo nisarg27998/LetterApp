@@ -22,6 +22,11 @@ h1 {
   margin: 0;
 }
 
+h2 {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
 button {
   padding: 10px 20px;
   background-color: #3498db;
@@ -29,31 +34,62 @@ button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  font-size: 16px;
+  transition: background-color 0.3s, transform 0.1s;
 }
 
 button:hover {
   background-color: #2980b9;
 }
 
+button:active {
+  transform: scale(0.98);
+}
+
+button:focus,
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #3498db;
+  outline-offset: 2px;
+}
+
+.hidden {
+  display: none;
+}
+
+.visible {
+  display: block;
+}
+
 section {
   margin-top: 20px;
   background-color: white;
   padding: 20px;
-  border-radius: 5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
 form {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  max-width: 400px; /* Reduced width for login form */
-  margin: 0 auto; /* Center the form */
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+}
+
+form label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #2c3e50;
 }
 
 input,
-textarea {
+textarea,
+select {
   padding: 12px;
   font-size: 16px;
   border: 1px solid #ddd;
@@ -62,71 +98,58 @@ textarea {
   box-sizing: border-box;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
 textarea {
-  min-height: 150px;
+  min-height: 100px;
   resize: vertical;
 }
 
-/* Login Section */
-#login-section {
-  max-width: 500px;
-  margin: 40px auto; /* Center login section */
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+textarea#content {
+  min-height: 250px;
 }
 
-#login-section h2 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 20px;
+/* Spinner */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-left: 8px;
 }
 
-#login-form button {
-  background-color: #2ecc71;
-  padding: 12px;
-  font-size: 16px;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-#login-form button:hover {
-  background-color: #27ae60;
-}
-
-#login-error {
+.success {
+  color: #2ecc71;
+  font-size: 14px;
   margin-top: 10px;
   text-align: center;
-  font-size: 14px;
-  color: red;
 }
 
-/* Registration Section */
-#registration-section {
-  max-width: 500px;
-  margin: 40px auto;
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-#registration-section h2 {
-  text-align: center;
-  color: #2c3e50;
-  margin-bottom: 20px;
-}
-
+/* Login & Registration */
+#login-form button,
 #registration-form button {
   background-color: #2ecc71;
-  padding: 12px;
-  font-size: 16px;
 }
 
+#login-form button:hover,
 #registration-form button:hover {
   background-color: #27ae60;
 }
 
-#registration-error {
+#login-error,
+#registration-error,
+#role-error {
   margin-top: 10px;
   text-align: center;
   font-size: 14px;
@@ -140,8 +163,8 @@ textarea {
 }
 
 #document-list li {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
   padding: 15px;
   border-bottom: 1px solid #eee;
@@ -149,57 +172,25 @@ textarea {
 
 #document-list li span {
   font-weight: bold;
-  margin-right: 10px;
 }
 
-#document-list li div {
+#document-list li div.button-container {
   display: flex;
   gap: 10px;
+  justify-self: end;
 }
 
 #document-list li:last-child {
   border-bottom: none;
 }
 
-#document-list button {
-  margin-left: 15px; /* Consistent margin */
-  padding: 8px 16px; /* Consistent padding */
-  border-radius: 5px;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
+#document-list button:nth-child(1) { background-color: #3498db; } /* Download */
+#document-list button:nth-child(2) { background-color: #f1c40f; } /* Edit */
+#document-list button:nth-child(3) { background-color: #e74c3c; } /* Delete */
 
-#document-list button:nth-child(1) {
-  /* Download */
-  margin-left: 0; /* No left margin on first button */
-  background-color: #3498db;
-}
-
-#document-list button:nth-child(2) {
-  /* Edit */
-  background-color: #f1c40f;
-}
-
-#document-list button:nth-child(3) {
-  /* Delete */
-  background-color: #e74c3c;
-}
-
-#document-list button:nth-child(1):hover {
-  /* Download hover */
-  background-color: #2980b9;
-}
-
-#document-list button:nth-child(2):hover {
-  /* Edit hover */
-  background-color: #d4ac0d;
-}
-
-#document-list button:nth-child(3):hover {
-  /* Delete hover */
-  background-color: #c0392b;
-}
+#document-list button:nth-child(1):hover { background-color: #2980b9; }
+#document-list button:nth-child(2):hover { background-color: #d4ac0d; }
+#document-list button:nth-child(3):hover { background-color: #c0392b; }
 
 /* Search Bar */
 #search-bar {
@@ -215,16 +206,6 @@ textarea {
   font-size: 16px;
 }
 
-/* Admin Section */
-#admin-section textarea {
-  min-height: 60px; /* Smaller for address fields */
-}
-
-#admin-section input,
-#admin-section textarea {
-  margin-bottom: 10px; /* Consistent spacing */
-}
-
 /* Modals */
 .modal {
   position: fixed;
@@ -237,6 +218,12 @@ textarea {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.modal.visible {
+  opacity: 1;
 }
 
 .modal-content {
@@ -246,6 +233,7 @@ textarea {
   text-align: center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
   position: relative;
+  min-width: 300px;
 }
 
 .modal-content h3 {
@@ -254,76 +242,38 @@ textarea {
 
 .modal-content button {
   margin: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
   border: none;
-  border-radius: 5px;
+  font-size: 24px;
+  color: #666;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: color 0.3s;
 }
 
-#pdf-btn {
-  background-color: #e74c3c;
-  color: white;
+.modal-close:hover {
+  color: #e74c3c;
 }
 
-#pdf-btn:hover {
-  background-color: #c0392b;
-}
-
-#docx-btn {
-  background-color: #3498db;
-  color: white;
-}
-
-#docx-btn:hover {
-  background-color: #2980b9;
-}
-
-#type-modal .modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 10px;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
-}
-
-#type-modal .modal-content button {
-  margin: 10px;
-  padding: 10px 20px;
-  font-size: 16px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-#letter-btn {
-  background-color: #3498db;
-  color: white;
-}
-
-#letter-btn:hover {
-  background-color: #2980b9;
-}
-
-#agenda-btn {
-  background-color: #e74c3c;
-  color: white;
-}
-
-#agenda-btn:hover {
-  background-color: #c0392b;
-}
+#pdf-btn { background-color: #e74c3c; }
+#pdf-btn:hover { background-color: #c0392b; }
+#docx-btn { background-color: #3498db; }
+#docx-btn:hover { background-color: #2980b9; }
+#letter-btn { background-color: #3498db; }
+#letter-btn:hover { background-color: #2980b9; }
+#agenda-btn { background-color: #e74c3c; }
+#agenda-btn:hover { background-color: #c0392b; }
 
 /* Navigation Bar */
 .navbar {
   background-color: #2c3e50;
   color: white;
   padding: 10px 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -331,6 +281,7 @@ textarea {
 
 .navbar-container {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   width: 100%;
 }
@@ -338,7 +289,6 @@ textarea {
 .navbar-title {
   font-size: 20px;
   font-weight: bold;
-  margin-right: auto;
 }
 
 .nav-links {
@@ -347,6 +297,7 @@ textarea {
   gap: 20px;
   margin: 0;
   padding: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .nav-links li {
@@ -357,11 +308,22 @@ textarea {
   color: white;
   text-decoration: none;
   font-size: 16px;
+  position: relative;
   transition: color 0.3s;
 }
 
 .nav-links a:hover {
   color: #1abc9c;
+}
+
+.nav-links a.active::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #1abc9c;
 }
 
 /* Hamburger Menu */
@@ -380,62 +342,53 @@ textarea {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .navbar-container {
+    justify-content: space-between;
+  }
   .nav-links {
     display: none;
     flex-direction: column;
-    background-color: #34495e;
     position: absolute;
-    top: 50px;
+    top: 100%;
     right: 0;
     width: 200px;
+    background-color: #34495e;
     padding: 10px;
-    border-radius: 5px;
-    transition: all 0.3s ease;
+    border-radius: 0 0 5px 5px;
+    transform: translateX(100%);
+    opacity: 0;
   }
-
   .nav-links.active {
     display: flex;
+    transform: translateX(0);
+    opacity: 1;
   }
-
   .hamburger-menu {
     display: block;
   }
 }
 
-/* Responsive Design */
 @media (max-width: 600px) {
   header {
     flex-direction: column;
     text-align: center;
   }
-
   #auth-section {
     margin-top: 10px;
   }
-
   #document-list li {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     text-align: center;
-    gap: 10px;
   }
-
-  #login-section {
-    margin: 20px 10px;
-    padding: 20px;
+  #document-list li div.button-container {
+    justify-self: center;
+    margin-top: 10px;
   }
 }
 
-
-.auth-section {
-  max-width: 500px;
-  margin: 40px auto;
-  padding: 30px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-}
-
-#login-section,
-#registration-section {
-  @extend .auth-section; /* If using a preprocessor like SASS */
+/* Footer */
+footer {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
 }
