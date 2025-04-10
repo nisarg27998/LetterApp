@@ -123,14 +123,12 @@ function handleUserLoggedOut() {
 
 // Utility Functions
 function toggleVisibility(element, isVisible) {
-  if (element) {
-    element.classList.toggle("visible", isVisible);
-  }
+  if (element) element.style.display = isVisible ? "block" : "none";
 }
 
 function displayError(element, message) {
   element.textContent = message;
-  element.classList.add("visible");
+  element.style.display = "block";
 }
 
 function showSession(sessionId) {
@@ -390,6 +388,7 @@ function resetForm() {
 function showDownloadOptions(data, role) {
   toggleVisibility(DOM.typeModal, true);
 
+  // Add close button to type modal
   let typeCloseBtn = DOM.typeModal.querySelector(".modal-close");
   if (!typeCloseBtn) {
     typeCloseBtn = document.createElement("span");
@@ -399,6 +398,7 @@ function showDownloadOptions(data, role) {
     DOM.typeModal.querySelector(".modal-content").appendChild(typeCloseBtn);
   }
 
+  // Click outside to close type modal
   DOM.typeModal.onclick = (event) => {
     if (event.target === DOM.typeModal) {
       toggleVisibility(DOM.typeModal, false);
@@ -408,17 +408,17 @@ function showDownloadOptions(data, role) {
   DOM.letterBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
     if (role === "user") {
-      generatePDF(data, "letter");
+      generatePDF(data, "letter"); // Users get PDF only
     } else {
-      showFormatModal(data, "letter");
+      showFormatModal(data, "letter"); // Admins/editors choose format
     }
   };
   DOM.agendaBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
     if (role === "user") {
-      generatePDF(data, "agenda");
+      generatePDF(data, "agenda"); // Users get PDF only
     } else {
-      showFormatModal(data, "agenda");
+      showFormatModal(data, "agenda"); // Admins/editors choose format
     }
   };
 }
@@ -426,6 +426,7 @@ function showDownloadOptions(data, role) {
 function showFormatModal(data, type) {
   toggleVisibility(DOM.formatModal, true);
 
+  // Add close button to format modal
   let formatCloseBtn = DOM.formatModal.querySelector(".modal-close");
   if (!formatCloseBtn) {
     formatCloseBtn = document.createElement("span");
@@ -435,6 +436,7 @@ function showFormatModal(data, type) {
     DOM.formatModal.querySelector(".modal-content").appendChild(formatCloseBtn);
   }
 
+  // Click outside to close format modal
   DOM.formatModal.onclick = (event) => {
     if (event.target === DOM.formatModal) {
       toggleVisibility(DOM.formatModal, false);
