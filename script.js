@@ -153,7 +153,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       DOM.loginError.textContent = "Login successful!";
-      DOM orError.classList.add("success");
+      DOM.orError.classList.add("success");
       setTimeout(() => showSession("guest-section"), 1000);
     } catch (error) {
       displayError(DOM.loginError, "Login failed: " + error.message);
