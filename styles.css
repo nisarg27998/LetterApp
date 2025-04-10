@@ -203,7 +203,7 @@ textarea {
   border-radius: 5px;
   color: white;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.1s; /* Added transform */
+  transition: background-color 0.3s, transform 0.1s;
 }
 
 #document-list button:nth-child(1) {
@@ -228,7 +228,7 @@ textarea {
 }
 
 #document-list button:nth-child(3):hover {
-  background-color: #c0392b;
+  background-color: "c0392b;
 }
 
 /* Search Bar */
@@ -278,6 +278,20 @@ textarea {
   position: relative;
 }
 
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 20px;
+  color: #333;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.modal-close:hover {
+  color: #e74c3c;
+}
+
 .modal-content h3 {
   margin-bottom: 20px;
 }
@@ -289,7 +303,7 @@ textarea {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.1s; /* Added transform */
+  transition: background-color 0.3s, transform 0.1s;
 }
 
 #pdf-btn {
@@ -325,7 +339,7 @@ textarea {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s, transform 0.1s; /* Added transform */
+  transition: background-color 0.3s, transform 0.1s;
 }
 
 #letter-btn {

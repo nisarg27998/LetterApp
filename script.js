@@ -68,11 +68,11 @@ function showToast(message, type = "info") {
   toast.textContent = message;
   document.body.appendChild(toast);
 
-  setTimeout(() => toast.classList.add("show"), 100); // Delay to allow CSS to apply
+  setTimeout(() => toast.classList.add("show"), 100);
   setTimeout(() => {
     toast.classList.remove("show");
-    setTimeout(() => toast.remove(), 300); // Wait for fade-out animation
-  }, 3000); // Display for 3 seconds
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 // Authentication State
@@ -387,6 +387,24 @@ function resetForm() {
 // Download Options
 function showDownloadOptions(data, role) {
   toggleVisibility(DOM.typeModal, true);
+  
+  // Add close button to type modal
+  let typeCloseBtn = DOM.typeModal.querySelector(".modal-close");
+  if (!typeCloseBtn) {
+    typeCloseBtn = document.createElement("span");
+    typeCloseBtn.className = "modal-close";
+    typeCloseBtn.innerHTML = "×";
+    typeCloseBtn.onclick = () => toggleVisibility(DOM.typeModal, false);
+    DOM.typeModal.querySelector(".modal-content").appendChild(typeCloseBtn);
+  }
+
+  // Click outside to close type modal
+  DOM.typeModal.onclick = (event) => {
+    if (event.target === DOM.typeModal) {
+      toggleVisibility(DOM.typeModal, false);
+    }
+  };
+
   DOM.letterBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
     role === "user"
@@ -403,6 +421,24 @@ function showDownloadOptions(data, role) {
 
 function showFormatModal(data, type) {
   toggleVisibility(DOM.formatModal, true);
+
+  // Add close button to format modal
+  let formatCloseBtn = DOM.formatModal.querySelector(".modal-close");
+  if (!formatCloseBtn) {
+    formatCloseBtn = document.createElement("span");
+    formatCloseBtn.className = "modal-close";
+    formatCloseBtn.innerHTML = "×";
+    formatCloseBtn.onclick = () => toggleVisibility(DOM.formatModal, false);
+    DOM.formatModal.querySelector(".modal-content").appendChild(formatCloseBtn);
+  }
+
+  // Click outside to close format modal
+  DOM.formatModal.onclick = (event) => {
+    if (event.target === DOM.formatModal) {
+      toggleVisibility(DOM.formatModal, false);
+    }
+  };
+
   DOM.pdfBtn.onclick = () => {
     toggleVisibility(DOM.formatModal, false);
     generatePDF(data, type);
