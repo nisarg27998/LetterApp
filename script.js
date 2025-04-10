@@ -1,6 +1,26 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, orderBy, query, serverTimestamp, addDoc, deleteDoc, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  addDoc,
+  deleteDoc,
+  doc,
+  updateDoc,
+  getDoc,
+  setDoc,
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig);
@@ -36,7 +56,9 @@ const DOM = {
 };
 
 // Authentication State
-onAuthStateChanged(auth, (user) => user ? handleUserLoggedIn(user) : handleUserLoggedOut());
+onAuthStateChanged(auth, (user) =>
+  user ? handleUserLoggedIn(user) : handleUserLoggedOut()
+);
 
 function handleUserLoggedIn(user) {
   toggleVisibility(DOM.loginBtn, false);
@@ -44,22 +66,26 @@ function handleUserLoggedIn(user) {
   toggleVisibility(DOM.registerBtn, false);
   toggleVisibility(DOM.loginSection, false);
 
-  getDoc(doc(db, "users", user.uid)).then((userDoc) => {
-    const userData = userDoc.data() || { role: "viewer" };
-    DOM.welcomeMessage.textContent = `Hi, ${userData.role === "admin" ? "Admin" : user.displayName || "User"}`;
-    const isAdmin = userData.role === "admin";
-    toggleVisibility(DOM.adminSection, true);
-    toggleVisibility(DOM.roleManagementSection, isAdmin);
-    toggleVisibility(DOM.adminNav, isAdmin);
-    toggleVisibility(DOM.guestSection, !isAdmin);
-    if (isAdmin) {
-      populateUserDropdown();
-      showSession("admin-section");
-    } else {
-      showSession("guest-section");
-    }
-    loadDocuments(isAdmin);
-  }).catch((error) => alert("Failed to load user data: " + error.message));
+  getDoc(doc(db, "users", user.uid))
+    .then((userDoc) => {
+      const userData = userDoc.data() || { role: "viewer" };
+      DOM.welcomeMessage.textContent = `Hi, ${
+        userData.role === "admin" ? "Admin" : user.displayName || "User"
+      }`;
+      const isAdmin = userData.role === "admin";
+      toggleVisibility(DOM.adminSection, true);
+      toggleVisibility(DOM.roleManagementSection, isAdmin);
+      toggleVisibility(DOM.adminNav, isAdmin);
+      toggleVisibility(DOM.guestSection, !isAdmin);
+      if (isAdmin) {
+        populateUserDropdown();
+        showSession("admin-section");
+      } else {
+        showSession("guest-section");
+      }
+      loadDocuments(isAdmin);
+    })
+    .catch((error) => alert("Failed to load user data: " + error.message));
 }
 
 function handleUserLoggedOut() {
@@ -86,7 +112,13 @@ function displayError(element, message) {
 }
 
 function showSession(sessionId) {
-  const sections = [DOM.adminSection, DOM.roleManagementSection, DOM.registrationSection, DOM.loginSection, DOM.guestSection];
+  const sections = [
+    DOM.adminSection,
+    DOM.roleManagementSection,
+    DOM.registrationSection,
+    DOM.loginSection,
+    DOM.guestSection,
+  ];
   sections.forEach((section) => toggleVisibility(section, false));
   toggleVisibility(document.getElementById(sessionId), true);
 }
@@ -117,7 +149,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = e.target.password.value.trim();
     signInWithEmailAndPassword(auth, email, password)
       .then(() => toggleVisibility(DOM.loginSection, false))
-      .catch((error) => displayError(DOM.loginError, "Login failed: " + error.message));
+      .catch((error) =>
+        displayError(DOM.loginError, "Login failed: " + error.message)
+      );
   });
 
   DOM.registrationForm.addEventListener("submit", (e) => {
@@ -137,7 +171,12 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Registration successful! Please log in.");
         showSession("login-section");
       })
-      .catch((error) => displayError(DOM.registrationError, "Registration failed: " + error.message));
+      .catch((error) =>
+        displayError(
+          DOM.registrationError,
+          "Registration failed: " + error.message
+        )
+      );
   });
 
   DOM.letterForm.addEventListener("submit", (e) => {
@@ -159,10 +198,14 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("Role assigned successfully!");
         DOM.roleForm.reset();
       })
-      .catch((error) => displayError(DOM.roleError, "Failed to assign role: " + error.message));
+      .catch((error) =>
+        displayError(DOM.roleError, "Failed to assign role: " + error.message)
+      );
   });
 
-  DOM.searchInput.addEventListener("input", () => loadDocuments(auth.currentUser && auth.currentUser.uid));
+  DOM.searchInput.addEventListener("input", () =>
+    loadDocuments(auth.currentUser && auth.currentUser.uid)
+  );
 
   DOM.loginBtn.addEventListener("click", () => showSession("login-section"));
   DOM.logoutBtn.addEventListener("click", () => {
@@ -172,7 +215,9 @@ document.addEventListener("DOMContentLoaded", () => {
         .catch((error) => alert("Logout failed: " + error.message));
     }
   });
-  DOM.registerBtn.addEventListener("click", () => showSession("registration-section"));
+  DOM.registerBtn.addEventListener("click", () =>
+    showSession("registration-section")
+  );
 
   document.querySelectorAll("#nav-links a").forEach((link) => {
     link.addEventListener("click", (e) => {
@@ -181,10 +226,16 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  DOM.hamburgerMenu.addEventListener("click", () => DOM.navLinks.classList.toggle("active"));
+  DOM.hamburgerMenu.addEventListener("click", () =>
+    DOM.navLinks.classList.toggle("active")
+  );
 
-  DOM.typeModal.addEventListener("click", (e) => { if (e.target === DOM.typeModal) toggleVisibility(DOM.typeModal, false); });
-  DOM.formatModal.addEventListener("click", (e) => { if (e.target === DOM.formatModal) toggleVisibility(DOM.formatModal, false); });
+  DOM.typeModal.addEventListener("click", (e) => {
+    if (e.target === DOM.typeModal) toggleVisibility(DOM.typeModal, false);
+  });
+  DOM.formatModal.addEventListener("click", (e) => {
+    if (e.target === DOM.formatModal) toggleVisibility(DOM.formatModal, false);
+  });
 });
 
 // Document Management
@@ -193,17 +244,19 @@ function loadDocuments(isAdmin) {
   DOM.documentList.innerHTML = "<p>Loading...</p>";
   const searchTerm = DOM.searchInput.value.trim().toLowerCase();
   const q = query(collection(db, "documents"), orderBy("timestamp", "desc"));
-  getDocs(q).then((querySnapshot) => {
-    DOM.documentList.innerHTML = "";
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (!searchTerm || data.title.toLowerCase().includes(searchTerm)) {
-        createDocumentListItem(docSnap.id, data, isAdmin);
-      }
+  getDocs(q)
+    .then((querySnapshot) => {
+      DOM.documentList.innerHTML = "";
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (!searchTerm || data.title.toLowerCase().includes(searchTerm)) {
+          createDocumentListItem(docSnap.id, data, isAdmin);
+        }
+      });
+    })
+    .catch((error) => {
+      DOM.documentList.innerHTML = `<p style="color: red;">Error loading documents: ${error.message}</p>`;
     });
-  }).catch((error) => {
-    DOM.documentList.innerHTML = `<p style="color: red;">Error loading documents: ${error.message}</p>`;
-  });
 }
 
 function loadDocuments(isAdmin, startAfter = null, limit = 10) {
@@ -215,23 +268,27 @@ function loadDocuments(isAdmin, startAfter = null, limit = 10) {
     limit(limit)
   );
   if (startAfter) q = query(q, startAfter(startAfter));
-  
-  getDocs(q).then((querySnapshot) => {
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      if (!searchTerm || data.title.toLowerCase().includes(searchTerm)) {
-        createDocumentListItem(docSnap.id, data, isAdmin);
+
+  getDocs(q)
+    .then((querySnapshot) => {
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (!searchTerm || data.title.toLowerCase().includes(searchTerm)) {
+          createDocumentListItem(docSnap.id, data, isAdmin);
+        }
+      });
+      // Add "Load More" button if there are more documents
+      if (querySnapshot.size === limit) {
+        const lastDoc = querySnapshot.docs[querySnapshot.size - 1];
+        const loadMoreBtn = document.createElement("button");
+        loadMoreBtn.textContent = "Load More";
+        loadMoreBtn.addEventListener("click", () =>
+          loadDocuments(isAdmin, lastDoc)
+        );
+        DOM.documentList.appendChild(loadMoreBtn);
       }
-    });
-    // Add "Load More" button if there are more documents
-    if (querySnapshot.size === limit) {
-      const lastDoc = querySnapshot.docs[querySnapshot.size - 1];
-      const loadMoreBtn = document.createElement("button");
-      loadMoreBtn.textContent = "Load More";
-      loadMoreBtn.addEventListener("click", () => loadDocuments(isAdmin, lastDoc));
-      DOM.documentList.appendChild(loadMoreBtn);
-    }
-  }).catch((error) => alert("Error loading documents: " + error.message));
+    })
+    .catch((error) => alert("Error loading documents: " + error.message));
 }
 
 function createDocumentListItem(id, data, isAdmin) {
@@ -330,7 +387,9 @@ function getFormData() {
 }
 
 function isFormDataValid(data) {
-  return Object.entries(data).every(([key, value]) => key === "timestamp" || value.trim() !== "");
+  return Object.entries(data).every(
+    ([key, value]) => key === "timestamp" || value.trim() !== ""
+  );
 }
 
 function resetForm() {
@@ -341,10 +400,12 @@ function resetForm() {
 }
 
 function downloadDoc(data) {
-  getDoc(doc(db, "users", auth.currentUser?.uid || "")).then((userDoc) => {
-    const isAdmin = userDoc.exists() && userDoc.data().role === "admin";
-    isAdmin ? showTypeModal(data) : generateAgenda(data);
-  }).catch(() => generateAgenda(data)); // Default to agenda for unauthenticated users
+  getDoc(doc(db, "users", auth.currentUser?.uid || ""))
+    .then((userDoc) => {
+      const isAdmin = userDoc.exists() && userDoc.data().role === "admin";
+      isAdmin ? showTypeModal(data) : generateAgenda(data);
+    })
+    .catch(() => generateAgenda(data)); // Default to agenda for unauthenticated users
 }
 
 function showTypeModal(data) {
@@ -382,7 +443,14 @@ function generatePDF(data) {
     doc.text(lines, x, y);
     y += lines.length * 7; // Adjust Y position
   };
-  addText(new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), 10);
+  addText(
+    new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }),
+    10
+  );
   addText(data.recipientName, 10);
   addText(data.salutation, 10);
   addText(`Subject: ${data.title}`, 10);
@@ -396,19 +464,93 @@ function generatePDF(data) {
 
 function generateDOCX(data) {
   const doc = new window.docx.Document({
-    sections: [{
-      children: [
-        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }), font: "Times New Roman", size: 24 })], spacing: { after: 400 } }),
-        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.salutation, font: "Times New Roman", size: 24 })], spacing: { after: 200 } }),
-        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Subject: ${data.title}`, bold: true, font: "Times New Roman", size: 24 })], spacing: { after: 200 } }),
-        new window.docx.Paragraph({ children: data.content.split("\n").map(line => new window.docx.TextRun({ text: line, font: "Times New Roman", size: 24 })), spacing: { after: 400 } }),
-        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: `Specific Request: ${data.specificRequest}`, font: "Times New Roman", size: 24 })], spacing: { after: 400 } }),
-        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.closing, font: "Times New Roman", size: 24 })], spacing: { after: 200 } }),
-        new window.docx.Paragraph({ children: [new window.docx.TextRun({ text: data.senderName, font: "Times New Roman", size: 24 })] }),
-      ],
-    }],
+    sections: [
+      {
+        children: [
+          new window.docx.Paragraph({
+            children: [
+              new window.docx.TextRun({
+                text: new Date().toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                }),
+                font: "Times New Roman",
+                size: 24,
+              }),
+            ],
+            spacing: { after: 400 },
+          }),
+          new window.docx.Paragraph({
+            children: [
+              new window.docx.TextRun({
+                text: data.salutation,
+                font: "Times New Roman",
+                size: 24,
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+          new window.docx.Paragraph({
+            children: [
+              new window.docx.TextRun({
+                text: `Subject: ${data.title}`,
+                bold: true,
+                font: "Times New Roman",
+                size: 24,
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+          new window.docx.Paragraph({
+            children: data.content
+              .split("\n")
+              .map(
+                (line) =>
+                  new window.docx.TextRun({
+                    text: line,
+                    font: "Times New Roman",
+                    size: 24,
+                  })
+              ),
+            spacing: { after: 400 },
+          }),
+          new window.docx.Paragraph({
+            children: [
+              new window.docx.TextRun({
+                text: `Specific Request: ${data.specificRequest}`,
+                font: "Times New Roman",
+                size: 24,
+              }),
+            ],
+            spacing: { after: 400 },
+          }),
+          new window.docx.Paragraph({
+            children: [
+              new window.docx.TextRun({
+                text: data.closing,
+                font: "Times New Roman",
+                size: 24,
+              }),
+            ],
+            spacing: { after: 200 },
+          }),
+          new window.docx.Paragraph({
+            children: [
+              new window.docx.TextRun({
+                text: data.senderName,
+                font: "Times New Roman",
+                size: 24,
+              }),
+            ],
+          }),
+        ],
+      },
+    ],
   });
-  window.docx.Packer.toBlob(doc).then((blob) => saveAs(blob, `${data.title}.docx`));
+  window.docx.Packer.toBlob(doc).then((blob) =>
+    saveAs(blob, `${data.title}.docx`)
+  );
 }
 
 function generateAgenda(data) {
@@ -435,30 +577,35 @@ function generateAgenda(data) {
 
 function populateUserDropdown() {
   const userEmailDropdown = document.getElementById("user-email");
-  userEmailDropdown.innerHTML = '<option value="" disabled selected>Select a user</option>';
-  getDocs(collection(db, "users")).then((querySnapshot) => {
-    querySnapshot.forEach((docSnap) => {
-      const option = document.createElement("option");
-      option.value = docSnap.id;
-      option.textContent = docSnap.data().email;
-      userEmailDropdown.appendChild(option);
-    });
-  }).catch((error) => alert("Error fetching users: " + error.message));
+  userEmailDropdown.innerHTML =
+    '<option value="" disabled selected>Select a user</option>';
+  getDocs(collection(db, "users"))
+    .then((querySnapshot) => {
+      querySnapshot.forEach((docSnap) => {
+        const option = document.createElement("option");
+        option.value = docSnap.id;
+        option.textContent = docSnap.data().email;
+        userEmailDropdown.appendChild(option);
+      });
+    })
+    .catch((error) => alert("Error fetching users: " + error.message));
 }
 
 function initializeDocumentsCollection() {
-  getDocs(collection(db, "documents")).then((querySnapshot) => {
-    if (querySnapshot.empty) {
-      addDoc(collection(db, "documents"), {
-        senderName: "Admin",
-        recipientName: "Test User",
-        salutation: "Dear",
-        title: "Welcome Letter",
-        content: "This is a test letter.",
-        specificRequest: "Please review.",
-        closing: "Best regards",
-        timestamp: serverTimestamp(),
-      }).then(() => loadDocuments(false));
-    }
-  }).catch((error) => alert("Error initializing documents: " + error.message));
+  getDocs(collection(db, "documents"))
+    .then((querySnapshot) => {
+      if (querySnapshot.empty) {
+        addDoc(collection(db, "documents"), {
+          senderName: "Admin",
+          recipientName: "Test User",
+          salutation: "Dear",
+          title: "Welcome Letter",
+          content: "This is a test letter.",
+          specificRequest: "Please review.",
+          closing: "Best regards",
+          timestamp: serverTimestamp(),
+        }).then(() => loadDocuments(false));
+      }
+    })
+    .catch((error) => alert("Error initializing documents: " + error.message));
 }

@@ -11,10 +11,10 @@
     <header>
       <h1>Letter & Agenda Writer</h1>
       <div id="auth-section">
-        <span id="welcome-message" style="margin-right: 10px;"></span>
+        <span id="welcome-message" style="margin-right: 10px"></span>
         <button id="register-btn">Register</button>
         <button id="login-btn">Login</button>
-        <button id="logout-btn" style="display: none;">Logout</button>
+        <button id="logout-btn" style="display: none">Logout</button>
       </div>
     </header>
 
@@ -34,7 +34,7 @@
     <!-- Main Content -->
     <main>
       <!-- Registration Section -->
-      <section id="registration-section" style="display: none;">
+      <section id="registration-section" style="display: none">
         <h2>User Registration</h2>
         <form id="registration-form">
           <label for="reg-username">Username:</label>
@@ -44,12 +44,12 @@
           <label for="reg-password">Password:</label>
           <input type="password" id="reg-password" required />
           <button type="submit">Register</button>
-          <p id="registration-error" style="color: red; display: none;"></p>
+          <p id="registration-error" style="color: red; display: none"></p>
         </form>
       </section>
 
       <!-- Login Section -->
-      <section id="login-section" style="display: none;">
+      <section id="login-section" style="display: none">
         <h2>Login</h2>
         <form id="login-form">
           <label for="email">Email:</label>
@@ -57,12 +57,12 @@
           <label for="password">Password:</label>
           <input type="password" id="password" required />
           <button type="submit">Login</button>
-          <p id="login-error" style="color: red; display: none;"></p>
+          <p id="login-error" style="color: red; display: none"></p>
         </form>
       </section>
 
       <!-- Admin Section -->
-      <section id="admin-section" style="display: none;">
+      <section id="admin-section" style="display: none">
         <h2 id="form-title">Create Letter/Agenda</h2>
         <form id="letter-form">
           <input type="hidden" id="edit-id" />
@@ -81,12 +81,14 @@
           <label for="closing">Closing:</label>
           <textarea id="closing" rows="2" required></textarea>
           <button type="submit">Save</button>
-          <button type="button" id="cancel-edit" style="display: none;">Cancel</button>
+          <button type="button" id="cancel-edit" style="display: none">
+            Cancel
+          </button>
         </form>
       </section>
 
       <!-- Role Management Section -->
-      <section id="role-management-section" style="display: none;">
+      <section id="role-management-section" style="display: none">
         <h2>Manage User Roles</h2>
         <form id="role-form">
           <label for="user-email">User Email:</label>
@@ -100,15 +102,19 @@
             <option value="admin">Admin (Full Access)</option>
           </select>
           <button type="submit">Assign Role</button>
-          <p id="role-error" style="color: red; display: none;"></p>
+          <p id="role-error" style="color: red; display: none"></p>
         </form>
       </section>
 
       <!-- Guest Section -->
-      <section id="guest-section" style="display: none;">
+      <section id="guest-section" style="display: none">
         <h2>Available Documents</h2>
         <div id="search-bar">
-          <input type="text" id="search-input" placeholder="Search by title..." />
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search by title..."
+          />
         </div>
         <ul id="document-list"></ul>
       </section>
