@@ -109,8 +109,11 @@ function handleUserLoggedOut() {
 
 // Utility Functions
 function toggleVisibility(element, isVisible) {
-  element?.classList.toggle("hidden", !isVisible);
-  element?.classList.toggle("visible", isVisible);
+  if (element) {
+    element.classList.toggle("hidden", !isVisible);
+    element.classList.toggle("visible", isVisible);
+    console.log(`${element.id} visibility set to: ${isVisible}`);
+  }
 }
 
 function displayError(element, message) {
@@ -139,11 +142,13 @@ function showSession(sessionId) {
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM fully loaded", DOM.loginBtn, DOM.letterForm);
   showSession("guest-section");
   loadDocuments("user");
   initializeDocumentsCollection();
 
   DOM.loginForm.addEventListener("submit", async (e) => {
+    console.log("Login form submitted");
     e.preventDefault();
     const email = e.target.email.value.trim();
     const password = e.target.password.value.trim();
@@ -153,7 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       DOM.loginError.textContent = "Login successful!";
-      DOM.orError.classList.add("success");
+      DOM.loginError.classList.add("success");
       setTimeout(() => showSession("guest-section"), 1000);
     } catch (error) {
       displayError(DOM.loginError, "Login failed: " + error.message);
@@ -163,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   DOM.registrationForm.addEventListener("submit", async (e) => {
+    console.log("Registration form submitted");
     e.preventDefault();
     const username = e.target["reg-username"].value.trim();
     const email = e.target["reg-email"].value.trim();
@@ -188,6 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   DOM.letterForm.addEventListener("submit", (e) => {
+    console.log("Letter form submitted");
     e.preventDefault();
     const formData = getFormData();
     if (!isFormDataValid(formData)) return alert("Please fill in all fields.");
@@ -199,6 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
   DOM.cancelEditBtn.addEventListener("click", resetForm);
 
   DOM.roleForm.addEventListener("submit", async (e) => {
+    console.log("Role form submitted");
     e.preventDefault();
     const userId = e.target["user-email"].value;
     const role = e.target["user-role"].value;
@@ -227,12 +235,20 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
   });
 
-  DOM.loginBtn.addEventListener("click", () => showSession("login-section"));
+  DOM.loginBtn.addEventListener("click", () => {
+    console.log("Login button clicked");
+    showSession("login-section");
+  });
   DOM.logoutBtn.addEventListener("click", () => {
+    console.log("Logout button clicked");
     if (confirm("Are you sure you want to log out?")) signOut(auth).then(() => alert("Logged out."));
   });
-  DOM.registerBtn.addEventListener("click", () => showSession("registration-section"));
+  DOM.registerBtn.addEventListener("click", () => {
+    console.log("Register button clicked");
+    showSession("registration-section");
+  });
   DOM.hamburgerMenu.addEventListener("click", () => {
+    console.log("Hamburger menu clicked");
     const isExpanded = DOM.navLinks.classList.toggle("active");
     DOM.hamburgerMenu.classList.toggle("active");
     DOM.hamburgerMenu.setAttribute("aria-expanded", isExpanded);
@@ -240,6 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.querySelectorAll("#nav-links a").forEach((link) => {
     link.addEventListener("click", (e) => {
+      console.log("Nav link clicked:", link.textContent);
       e.preventDefault();
       document.querySelectorAll("#nav-links a").forEach((l) => l.classList.remove("active"));
       link.classList.add("active");
@@ -252,7 +269,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.querySelectorAll(".modal-close").forEach((btn) => {
-    btn.addEventListener("click", () => btn.closest(".modal").classList.remove("visible"));
+    btn.addEventListener("click", () => {
+      console.log("Modal close clicked");
+      btn.closest(".modal").classList.remove("visible");
+    });
   });
 });
 
@@ -306,7 +326,10 @@ async function createButtonContainer(id, data, role) {
 function createButton(text, onClick) {
   const button = document.createElement("button");
   button.textContent = text;
-  button.addEventListener("click", onClick);
+  button.addEventListener("click", () => {
+    console.log(`${text} button clicked`);
+    onClick();
+  });
   return button;
 }
 
@@ -372,11 +395,14 @@ function resetForm() {
 // Download Options
 function showDownloadOptions(data, role) {
   toggleVisibility(DOM.typeModal, true);
+  console.log("Showing download options for", data.title);
   DOM.letterBtn.onclick = () => {
+    console.log("Letter download selected");
     toggleVisibility(DOM.typeModal, false);
     role === "user" ? generatePDF(data, "letter") : showFormatModal(data, "letter");
   };
   DOM.agendaBtn.onclick = () => {
+    console.log("Agenda download selected");
     toggleVisibility(DOM.typeModal, false);
     role === "user" ? generatePDF(data, "agenda") : showFormatModal(data, "agenda");
   };
@@ -384,11 +410,14 @@ function showDownloadOptions(data, role) {
 
 function showFormatModal(data, type) {
   toggleVisibility(DOM.formatModal, true);
+  console.log("Showing format modal for", type);
   DOM.pdfBtn.onclick = () => {
+    console.log("PDF download clicked");
     toggleVisibility(DOM.formatModal, false);
     generatePDF(data, type);
   };
   DOM.docxBtn.onclick = () => {
+    console.log("DOCX download clicked");
     toggleVisibility(DOM.formatModal, false);
     generateDOCX(data, type);
   };
