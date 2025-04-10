@@ -387,7 +387,7 @@ function resetForm() {
 // Download Options
 function showDownloadOptions(data, role) {
   toggleVisibility(DOM.typeModal, true);
-  
+
   // Add close button to type modal
   let typeCloseBtn = DOM.typeModal.querySelector(".modal-close");
   if (!typeCloseBtn) {
@@ -407,15 +407,19 @@ function showDownloadOptions(data, role) {
 
   DOM.letterBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
-    role === "user"
-      ? generatePDF(data, "letter")
-      : showFormatModal(data, "letter");
+    if (role === "user") {
+      generatePDF(data, "letter"); // Users get PDF only
+    } else {
+      showFormatModal(data, "letter"); // Admins/editors choose format
+    }
   };
   DOM.agendaBtn.onclick = () => {
     toggleVisibility(DOM.typeModal, false);
-    role === "user"
-      ? generatePDF(data, "agenda")
-      : showFormatModal(data, "agenda");
+    if (role === "user") {
+      generatePDF(data, "agenda"); // Users get PDF only
+    } else {
+      showFormatModal(data, "agenda"); // Admins/editors choose format
+    }
   };
 }
 
