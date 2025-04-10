@@ -231,7 +231,7 @@ async function loadDocuments(role, startAfterDoc = null, limit = 10) {
   let q = query(
     collection(db, "documents"),
     orderBy("timestamp", "desc"),
-    limit(limit)
+    limit(10)
   );
   if (startAfterDoc) q = query(q, startAfter(startAfterDoc));
 
