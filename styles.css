@@ -29,11 +29,15 @@ button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: background-color 0.3s, transform 0.1s;
 }
 
 button:hover {
   background-color: #2980b9;
+}
+
+button:active {
+  transform: scale(0.95); /* Scale down to 95% on click */
 }
 
 section {
@@ -372,6 +376,11 @@ textarea {
   color: white;
   font-size: 24px;
   cursor: pointer;
+  transition: transform 0.1s; /* Add transition for consistency */
+}
+
+.hamburger-menu:active {
+  transform: scale(0.95); /* Apply animation to hamburger too */
 }
 
 .hamburger-menu.active::before {
